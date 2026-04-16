@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force)",
+      "Bash(git push -f)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/hooks/post_write_log.py"
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "WAZA_ENV": "development",
+    "LOG_LEVEL": "INFO"
+  },
+  "statusLine": "python scripts/statusline.py",
+  "autoMemoryEnabled": true
+}

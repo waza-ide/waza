@@ -1,0 +1,62 @@
+{
+  "name": "waza",
+  "displayName": "Waza",
+  "description": "AI エージェント型 IDE — ローカルモデルとクラウドモデルを自動ルーティング",
+  "version": "0.0.1",
+  "private": true,
+  "engines": {
+    "vscode": "^1.87.0"
+  },
+  "categories": ["AI", "Other"],
+  "keywords": ["ai", "agent", "llm", "local", "ollama"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "waza.openPanel",
+        "title": "Waza: パネルを開く"
+      },
+      {
+        "command": "waza.startAgent",
+        "title": "Waza: エージェントを起動"
+      }
+    ],
+    "configuration": {
+      "title": "Waza",
+      "properties": {
+        "waza.preferLocalModel": {
+          "type": "boolean",
+          "default": true,
+          "description": "ローカルモデルを優先して使用する"
+        },
+        "waza.localModelUrl": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "ローカルモデルサーバーの URL"
+        },
+        "waza.cloudModel": {
+          "type": "string",
+          "default": "claude-sonnet-4-5",
+          "description": "クラウドフォールバック時に使用するモデル"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run",
+    "clean": "rm -rf dist",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "@waza/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.87.0",
+    "@vscode/vsce": "^2.24.0",
+    "vitest": "^1.4.0"
+  }
+}

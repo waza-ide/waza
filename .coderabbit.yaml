@@ -1,0 +1,25 @@
+language: ja
+reviews:
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "packages/extension/**"
+      instructions: |
+        VSCode Extension APIの正しい使用を確認すること。
+        extension.tsは凍結ファイル。構造変更があれば必ず指摘すること。
+    - path: "packages/core/src/providers/**"
+      instructions: |
+        Providerインターフェース（base.ts）への準拠を確認すること。
+        APIキーがハードコードされていないか必ずチェックすること。
+    - path: "packages/ui/**"
+      instructions: |
+        WebviewセキュリティCSP・nonceの実装を確認すること。
+        VSCode APIへの直接参照がないか確認すること。
+  tools:
+    eslint:
+      enabled: true
+    typescript:
+      enabled: true
+chat:
+  auto_reply: true
