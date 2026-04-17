@@ -1,8 +1,8 @@
 {
   "name": "waza",
-  "displayName": "Waza",
-  "description": "AI エージェント型 IDE — ローカルモデルとクラウドモデルを自動ルーティング",
-  "version": "0.0.1",
+  "displayName": "Waza — AI IDE",
+  "description": "Privacy-first AI coding agent. Local models supported.",
+  "version": "0.1.0",
   "private": true,
   "engines": {
     "vscode": "^1.87.0"
@@ -15,11 +15,26 @@
     "commands": [
       {
         "command": "waza.openPanel",
-        "title": "Waza: パネルを開く"
+        "title": "Waza: Open Agent Panel"
       },
       {
-        "command": "waza.startAgent",
-        "title": "Waza: エージェントを起動"
+        "command": "waza.runAgent",
+        "title": "Waza: Run Agent"
+      },
+      {
+        "command": "waza.selectModel",
+        "title": "Waza: Select Model"
+      },
+      {
+        "command": "waza.stopAgent",
+        "title": "Waza: Stop Agent"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "waza.openPanel",
+        "key": "ctrl+shift+w",
+        "mac": "cmd+shift+w"
       }
     ],
     "configuration": {
@@ -45,17 +60,19 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "watch": "tsc -watch -p tsconfig.json",
+    "package": "vsce package",
     "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "rm -rf dist",
-    "package": "vsce package"
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@waza/core": "workspace:*"
   },
   "devDependencies": {
     "@types/vscode": "^1.87.0",
+    "@vscode/test-electron": "^2.3.0",
     "@vscode/vsce": "^2.24.0",
     "vitest": "^1.4.0"
   }

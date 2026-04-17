@@ -12,7 +12,7 @@ import {
 export class ModelRouter {
   private readonly config: RouterConfig;
 
-  constructor(context: vscode.ExtensionContext) {
+  constructor(_context: vscode.ExtensionContext) {
     const cfg = vscode.workspace.getConfiguration("waza");
 
     this.config = {

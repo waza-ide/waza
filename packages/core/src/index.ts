@@ -12,6 +12,9 @@ export type {
   RouterConfig,
 } from "./models/types.js";
 
+export type { ModelConfig } from "./models/config.js";
+
 export { BaseProvider } from "./providers/base.js";
 export { ClaudeProvider } from "./providers/claude.js";
 export { OllamaProvider } from "./providers/ollama.js";
+export { ModelRouter } from "./router/index.js";

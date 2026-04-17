@@ -12,8 +12,10 @@
     "test": "vitest run",
     "clean": "rm -rf dist"
   },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0"
+  },
   "devDependencies": {
     "vitest": "^1.4.0"
-  },
-  "dependencies": {}
+  }
 }

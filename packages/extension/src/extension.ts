@@ -1,35 +1,46 @@
-// # FROZEN — このファイルのインターフェース変更は禁止。変更前にユーザーに確認すること。
+// # FROZEN — activate/deactivate のシグネチャ変更禁止
 
 import * as vscode from "vscode";
-import { AgentLoop } from "./agent/loop";
 import { WazaPanel } from "./webview/panel";
+import { AgentLoop } from "./agent/loop";
+import { ModelRouter } from "@waza/core";
 
 let agentLoop: AgentLoop | undefined;
 
-/**
- * 拡張機能のエントリーポイント
- * VSCode がアクティベートしたときに呼ばれる
- */
 export function activate(context: vscode.ExtensionContext): void {
-  agentLoop = new AgentLoop(context);
+  const router = new ModelRouter();
+
+  agentLoop = new AgentLoop(router, context);
 
   context.subscriptions.push(
     vscode.commands.registerCommand("waza.openPanel", () => {
-      WazaPanel.createOrShow(context);
+      WazaPanel.createOrShow(context.extensionUri, agentLoop!);
     }),
 
-    vscode.commands.registerCommand("waza.startAgent", async () => {
-      await agentLoop?.start();
+    vscode.commands.registerCommand("waza.runAgent", async () => {
+      const input = await vscode.window.showInputBox({
+        prompt: "Waza に何をさせますか？",
+        placeHolder: "例: このファイルのバグを修正して",
+      });
+      if (input) {
+        WazaPanel.createOrShow(context.extensionUri, agentLoop!);
+        await agentLoop!.run(input);
+      }
+    }),
+
+    vscode.commands.registerCommand("waza.selectModel", async () => {
+      await agentLoop!.selectModel();
+    }),
+
+    vscode.commands.registerCommand("waza.stopAgent", () => {
+      agentLoop!.stop();
     })
   );
 
   vscode.window.showInformationMessage("Waza が起動しました 🚀");
 }
 
-/**
- * 拡張機能が非アクティブになるときに呼ばれる
- */
 export function deactivate(): void {
-  agentLoop?.dispose();
+  agentLoop?.stop();
   agentLoop = undefined;
 }
