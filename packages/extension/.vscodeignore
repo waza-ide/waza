@@ -1,0 +1,16 @@
+.claude/
+.github/
+docs/
+scripts/
+node_modules/
+src/
+**/__tests__/
+**/*.test.ts
+**/*.map
+tsconfig*.json
+vite.config.ts
+.eslintrc*
+.prettierrc*
+HANDOFF.md
+STRUCTURE.md
+AGENTS.md

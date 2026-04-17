@@ -3,12 +3,28 @@
   "displayName": "Waza — AI IDE",
   "description": "Privacy-first AI coding agent. Local models supported.",
   "version": "0.1.0",
-  "private": true,
+  "publisher": "waza-ide",
   "engines": {
     "vscode": "^1.87.0"
   },
   "categories": ["AI", "Other"],
-  "keywords": ["ai", "agent", "llm", "local", "ollama"],
+  "keywords": [
+    "ai", "agent", "ide", "local-model", "ollama",
+    "privacy", "copilot", "cursor", "waza"
+  ],
+  "icon": "assets/icon.png",
+  "galleryBanner": {
+    "color": "#1a1a2e",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/waza-ide/waza"
+  },
+  "bugs": {
+    "url": "https://github.com/waza-ide/waza/issues"
+  },
+  "homepage": "https://github.com/waza-ide/waza#readme",
   "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
   "contributes": {
@@ -61,7 +77,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "watch": "tsc -watch -p tsconfig.json",
-    "package": "vsce package",
+    "package": "vsce package --no-dependencies",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
