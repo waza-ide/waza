@@ -1,0 +1,17 @@
+import { contextBridge, ipcRenderer } from 'electron';
+
+// renderer → main への安全なブリッジ
+contextBridge.exposeInMainWorld('wazaAPI', {
+  fs: {
+    readFile: (filePath: string) =>
+      ipcRenderer.invoke('fs:readFile', filePath),
+    writeFile: (filePath: string, content: string) =>
+      ipcRenderer.invoke('fs:writeFile', filePath, content),
+    readDir: (dirPath: string) =>
+      ipcRenderer.invoke('fs:readDir', dirPath),
+  },
+  dialog: {
+    openFolder: () =>
+      ipcRenderer.invoke('dialog:openFolder'),
+  },
+});

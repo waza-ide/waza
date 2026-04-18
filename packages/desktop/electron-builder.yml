@@ -1,0 +1,30 @@
+appId: dev.waza-ide.waza
+productName: Waza
+copyright: Copyright © 2026 mdl-systems
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**
+  - node_modules/**
+  - package.json
+
+linux:
+  target:
+    - deb
+    - AppImage
+  category: Development
+  icon: build/icon.png
+
+deb:
+  depends:
+    - libgtk-3-0
+    - libnotify4
+    - libnss3
+    - libxss1
+    - libxtst6
+    - xdg-utils
+    - libatspi2.0-0
+    - libuuid1

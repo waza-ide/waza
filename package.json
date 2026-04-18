@@ -7,7 +7,11 @@
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "desktop:dev": "pnpm -F @waza/desktop dev",
+    "desktop:electron": "pnpm -F @waza/desktop electron",
+    "desktop:build": "pnpm -F @waza/desktop build",
+    "desktop:package": "pnpm -F @waza/desktop package"
   },
   "devDependencies": {
     "typescript": "^5.4.0",

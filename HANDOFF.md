@@ -1,53 +1,63 @@
 # Waza — セッション引き継ぎ
 
 ## 最終更新
-- 日時: 2026-04-17
-- 担当エージェント: Antigravity (Phase 5: VSIX生成・Marketplace公開準備)
+- 日時: 2026-04-18
+- 担当エージェント: Antigravity (Phase 6: 並列実装 / Phase 7: Electron MVP)
 
 ## 完了タスク
-- [Phase 1] モノレポ初期構造の構築（CLAUDE.md / AGENTS.md / STRUCTURE.md / pnpm workspace）
-- [Phase 1] .claude/ ハーネス（settings / rules / skills / agents）
-- [Phase 1] 4パッケージ骨格（extension / core / ui / cocoro-bridge）
-- [Phase 1] CI / CodeRabbit 設定 / LICENSE
-- [Phase 3] @waza/core に ModelConfig 型・ModelRouter クラスを追加
-- [Phase 3] packages/extension/src/extension.ts — FROZEN 実装（activate/deactivate）
-- [Phase 3] packages/extension/src/agent/loop.ts — AgentLoop（plan→tool→eval、最大10ステップ）
-- [Phase 3] packages/extension/src/agent/tools.ts — readFile / writeFile / listDirectory / findFiles
-- [Phase 3] packages/extension/src/webview/panel.ts — WazaPanel（CSP+nonce / Accept-Reject diff）
-- [Phase 3] packages/extension/src/__tests__/agent.test.ts — 7テスト全通過
-- [Phase 3] pnpm typecheck ✅ / lint ✅ / test ✅ 7/7
-- [genshijin] .claude/skills/genshijin/SKILL.md 導入 + CLAUDE.md追記
-- [Phase 5] packages/extension/package.json — publisher/repository/keywords/icon等追加、private削除
-- [Phase 5] packages/extension/.vscodeignore — 不要ファイル除外設定
-- [Phase 5] packages/extension/LICENSE — Apache 2.0 コピー
-- [Phase 5] packages/extension/assets/icon.png — 技アイコン（teal/circuit）配置
-- [Phase 5] README.md — Marketplace掲載用（英日両言語・バッジ・モデル対応表）
-- [Phase 5] CHANGELOG.md — v0.1.0 リリースノート
-- [Phase 5] .github/workflows/release.yml — タグpush時VSIX自動生成＋Draft Release
-- [Phase 5] waza-0.1.0.vsix — ローカル生成確認済み（395KB、警告なし）
+- [Phase 1] モノレポ初期構造（CLAUDE.md / AGENTS.md / STRUCTURE.md / pnpm workspace）
+- [Phase 1] .claude/ ハーネス / 4パッケージ骨格 / CI / CodeRabbit / LICENSE
+- [Phase 3] ModelRouter / AgentLoop / WazaPanel / テスト 7/7 pass
+- [genshijin] .claude/skills/genshijin/SKILL.md 導入
+- [Phase 5] VSIX生成・README・CHANGELOG・release.yml・v0.1.0タグ push
+- [Phase 6] cocoro-bridge: zodバリデーション / APIキー認証 / リトライ / detectLocalModels
+- [Phase 6] ui: DiffViewWithContent（diffLines / 折りたたみ / y/n キーボードショートカット）
+- [Phase 6] core: GeminiProvider 実装 / ModelRouter に gemini フォールバック追加
+- [Phase 6] ProviderKind / ModelConfig に "gemini" 追加（FROZEN types.ts に追記）
+- [Phase 6] 全テスト: cocoro-bridge 10/10 / ui 5/5 / core 4/4 / extension 7/7 pass
+- [Phase 6] commit: ad5e2f4
+- [Phase 7] packages/desktop/ 新規作成（Electron v29 + Monaco + React）
+  - src/main/index.ts — IPC handlers（readFile/writeFile/readDir/openFolder）
+  - src/preload/index.ts — contextBridge（window.wazaAPI）
+  - src/renderer/App.tsx — 3ペインレイアウト（FileTree/Editor/WazaSidebar）
+  - src/renderer/components/FileTree.tsx — 再帰展開ファイルツリー
+  - src/renderer/components/Editor.tsx — Monaco + Ctrl+S保存
+  - src/renderer/components/WazaSidebar.tsx — ModelRouter連携チャットUI
+  - tsconfig.main/renderer / vite.config.ts / electron-builder.yml / AGENTS.md
+  - build:main ✅ / build:renderer ✅（253KB bundle）
 
 ## 次のタスク（候補）
-- アイコン最適化（128x128px PNG、現在384KBで大きい → Marketplace提出前に差し替え）
-- packages/cocoro-bridge 本実装
-- DiffView行差分アルゴリズム改善
-- Marketplace正式公開（publisher登録 `waza-ide`・アイコン最適化）
-- Gemini provider 本実装
-- v0.1.0 タグ push + GitHub Draft Release 発火
-  → `git tag v0.1.0 && git push origin v0.1.0` でCI起動
+- Electron起動確認（Electronダウンロード後: `pnpm desktop:electron`）
+  → `packages/desktop/electron` または `NODE_ENV=development pnpm desktop:electron`
+- .deb パッケージ生成: `pnpm desktop:package` → `sudo dpkg -i release/waza_*.deb`
+- FileTreeの再帰展開深度制限（現在は無制限）
+- AgentLoop を extension の loop.ts から desktop に移植
+- 自動アップデート（electron-updater）
+- Marketplace正式公開（publisher登録 `waza-ide`・アイコン最適化 128px）
+- DiffViewWithContent を WazaPanel（extension）にも接続
+- v0.2.0計画: マルチファイル編集・コンテキスト管理・テスト自動生成
 
 ## 未解決事項
-- packages/extension/src/router/index.ts は Phase 1 の旧実装が残存
-  → @waza/core の ModelRouter を使うため未使用。Phase 6でリファクタ対応
-- @anthropic-ai/sdk の isAvailable() は models.list() を使用
-  → 将来バージョンで型変更時は修正が必要
-- アイコン icon.png が384KB（推奨よりも大）
-  → Marketplace提出時に128×128px適切サイズに最適化すること
+- packages/extension/src/router/index.ts — Phase 1 旧実装残存（未使用）
+- アイコン icon.png が384KB（Marketplace提出前に最適化必要）
+- FROZEN types.ts に "gemini" を追記済み（union拡張のため破壊なし）
+- @anthropic-ai/sdk の isAvailable() は models.list() を使用（API変更時に修正必要）
+- pnpm approve-builds で electron build scripts 承認中（ダウンロード待ち）
+
+## Electron 開発サーバー起動手順
+```bash
+# Terminal 1（renderer Vite dev server）
+cd packages/desktop && pnpm dev:renderer
+
+# Terminal 2（Electron起動）
+NODE_ENV=development pnpm -F @waza/desktop electron
+```
 
 ## 注意事項
 - packages/extension/src/extension.ts は # FROZEN（変更前に確認）
-- packages/core/src/models/types.ts は # FROZEN
+- packages/core/src/models/types.ts は # FROZEN（gemini追加は承認済み）
 - packages/core/src/providers/base.ts は # FROZEN
-- core の dist/ をビルドしてから extension の typecheck を実行すること
-  → `pnpm -F @waza/core build` を先に実行する
-- pnpm は `~/.local/share/pnpm/pnpm` にある（PATH未設定環境では要export）
-
+- core の dist/ をビルドしてから extension の typecheck を実行
+- pnpm は `~/.local/share/pnpm/pnpm` にある（PATH要export）
+- `pnpm -r build` は desktop パッケージを含む（5パッケージ）
+- Electron起動前に `pnpm approve-builds` + electron ダウンロードが必要

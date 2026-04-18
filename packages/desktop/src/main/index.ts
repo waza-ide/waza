@@ -1,0 +1,72 @@
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import * as path from 'node:path';
+import * as fs from 'node:fs/promises';
+
+const isDev = process.env['NODE_ENV'] === 'development';
+
+function createWindow(): BrowserWindow {
+  const win = new BrowserWindow({
+    width: 1280,
+    height: 800,
+    minWidth: 800,
+    minHeight: 600,
+    backgroundColor: '#0d1117',
+    titleBarStyle: 'hiddenInset',
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  if (isDev) {
+    void win.loadURL('http://localhost:5173');
+    win.webContents.openDevTools();
+  } else {
+    void win.loadFile(path.join(__dirname, '../renderer/index.html'));
+  }
+
+  return win;
+}
+
+// IPC: ファイル読み込み
+ipcMain.handle('fs:readFile', async (_event, filePath: string) => {
+  return fs.readFile(filePath, 'utf-8');
+});
+
+// IPC: ファイル書き込み
+ipcMain.handle('fs:writeFile', async (_event, filePath: string, content: string) => {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  return fs.writeFile(filePath, content, 'utf-8');
+});
+
+// IPC: ディレクトリ一覧
+ipcMain.handle('fs:readDir', async (_event, dirPath: string) => {
+  const entries = await fs.readdir(dirPath, { withFileTypes: true });
+  return entries.map(e => ({
+    name: e.name,
+    path: path.join(dirPath, e.name),
+    isDirectory: e.isDirectory(),
+  }));
+});
+
+// IPC: フォルダ選択ダイアログ
+ipcMain.handle('dialog:openFolder', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win) return null;
+  const result = await dialog.showOpenDialog(win, {
+    properties: ['openDirectory'],
+  });
+  return result.canceled ? null : result.filePaths[0] ?? null;
+});
+
+app.whenReady().then(() => {
+  createWindow();
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
