@@ -41,6 +41,19 @@ No telemetry. No data collection. Local-first by design.
 
 ---
 
+## Screenshots
+
+> Screenshots will be added after initial release.
+
+<!-- 
+  Marketplace掲載時に追加:
+  ![Agent Panel](assets/screenshots/agent-panel.png)
+  ![Diff View](assets/screenshots/diff-view.png)
+  ![Model Picker](assets/screenshots/model-picker.png)
+-->
+
+---
+
 ## Quick Start
 
 1. Install from VSCode Marketplace (search **"Waza"**)

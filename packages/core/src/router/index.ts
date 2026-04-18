@@ -1,4 +1,5 @@
 import { ClaudeProvider } from "../providers/claude.js";
+import { GeminiProvider } from "../providers/gemini.js";
 import { OllamaProvider } from "../providers/ollama.js";
 import type { BaseProvider } from "../providers/base.js";
 import type { ModelConfig } from "../models/config.js";
@@ -8,22 +9,23 @@ const OLLAMA_URL = "http://localhost:11434";
 
 /**
  * ローカルモデル優先でプロバイダーを自動選択するルーター
- * cocoro-core → Ollama → Claude の優先順で試みる
+ * cocoro-core → Ollama → Claude → Gemini の優先順で試みる
  */
 export class ModelRouter {
   /**
    * 現在利用可能なプロバイダー名の一覧を返す
    */
-  async getAvailableProviders(): Promise<Array<"cocoro" | "ollama" | "claude">> {
+  async getAvailableProviders(): Promise<Array<"cocoro" | "ollama" | "claude" | "gemini">> {
     const [cocoroOk, ollamaOk] = await Promise.all([
       this.checkUrl(`${COCORO_URL}/health`),
       this.checkUrl(`${OLLAMA_URL}/api/tags`),
     ]);
 
-    const available: Array<"cocoro" | "ollama" | "claude"> = [];
+    const available: Array<"cocoro" | "ollama" | "claude" | "gemini"> = [];
     if (cocoroOk) available.push("cocoro");
     if (ollamaOk) available.push("ollama");
     available.push("claude"); // クラウドは常にリスト掲載（API キーなしの場合は呼び出し時にエラー）
+    if (process.env["GEMINI_API_KEY"]) available.push("gemini");
     return available;
   }
 
@@ -54,6 +56,12 @@ export class ModelRouter {
           model: config.model === "default" ? "claude-sonnet-4-5" : config.model,
           apiKey: process.env["ANTHROPIC_API_KEY"],
         });
+      case "gemini":
+        return new GeminiProvider({
+          kind: "gemini",
+          model: config.model === "default" ? "gemini-2.0-flash" : config.model,
+          apiKey: process.env["GEMINI_API_KEY"],
+        });
     }
   }
 
@@ -80,6 +88,9 @@ export class ModelRouter {
       model: "claude-sonnet-4-5",
       apiKey: process.env["ANTHROPIC_API_KEY"],
     });
+    // Gemini は claude が失敗した場合のフォールバック
+    // （ClaudeProvider のコンストラクタが apiKey なしでも例外を投げるため
+    //   ここでは到達しない場合がある）
   }
 
   private async checkUrl(url: string): Promise<boolean> {

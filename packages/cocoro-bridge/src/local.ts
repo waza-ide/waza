@@ -122,3 +122,91 @@ export async function resolveLocalBaseUrl(options?: {
 
   return null;
 }
+
+/**
+ * provider フィールド付きの拡張モデル情報
+ */
+export interface LocalModelInfoExtended {
+  provider: 'cocoro' | 'ollama';
+  name: string;
+  size?: number;
+}
+
+/**
+ * 利用可能なローカルモデルを全て列挙する（cocoro + ollama 並列取得）
+ */
+export async function detectLocalModels(): Promise<LocalModelInfoExtended[]> {
+  const [cocoroResult, ollamaResult] = await Promise.allSettled([
+    detectCocoroModels(),
+    getOllamaModels(),
+  ]);
+
+  const result: LocalModelInfoExtended[] = [];
+  if (cocoroResult.status === 'fulfilled') result.push(...cocoroResult.value);
+  if (ollamaResult.status === 'fulfilled') result.push(...ollamaResult.value);
+  return result;
+}
+
+/**
+ * cocoro-OS が起動しているか確認する
+ */
+export async function isCocoroAvailable(): Promise<boolean> {
+  try {
+    const res = await fetch('http://localhost:8001/health', {
+      signal: AbortSignal.timeout(2000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ollama が起動しているか確認する
+ */
+export async function isOllamaAvailable(): Promise<boolean> {
+  try {
+    const res = await fetch('http://localhost:11434/api/tags', {
+      signal: AbortSignal.timeout(2000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ollama のモデル一覧を取得する
+ */
+export async function getOllamaModels(): Promise<LocalModelInfoExtended[]> {
+  try {
+    const res = await fetch('http://localhost:11434/api/tags', {
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { models: { name: string; size?: number }[] };
+    return data.models.map((m) => ({ provider: 'ollama' as const, name: m.name, size: m.size }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * cocoro-OS のモデル一覧を内部取得する
+ */
+async function detectCocoroModels(): Promise<LocalModelInfoExtended[]> {
+  try {
+    const healthRes = await fetch('http://localhost:8001/health', {
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!healthRes.ok) return [];
+    const modelsRes = await fetch('http://localhost:8001/v1/models', {
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!modelsRes.ok) return [];
+    const data = (await modelsRes.json()) as { data: { id: string }[] };
+    return data.data.map((m) => ({ provider: 'cocoro' as const, name: m.id }));
+  } catch {
+    return [];
+  }
+}

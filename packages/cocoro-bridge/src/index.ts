@@ -7,5 +7,8 @@ export type {
   CocoroStreamChunk,
 } from "./client.js";
 
-export { detectLocalServices, resolveLocalBaseUrl } from "./local.js";
-export type { LocalModelInfo, LocalServiceStatus } from "./local.js";
+export { detectLocalServices, resolveLocalBaseUrl, detectLocalModels, isCocoroAvailable, isOllamaAvailable, getOllamaModels } from "./local.js";
+export type { LocalModelInfo, LocalServiceStatus, LocalModelInfoExtended } from "./local.js";
+
+export { ChatMessageSchema, ChatRequestSchema, ChatResponseSchema } from "./types.js";
+export type { ChatMessage, ChatRequest, ChatResponse } from "./types.js";

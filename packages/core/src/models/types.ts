@@ -3,7 +3,7 @@
 /**
  * LLM プロバイダーの種別
  */
-export type ProviderKind = "claude" | "ollama" | "openai" | "cocoro";
+export type ProviderKind = "claude" | "ollama" | "openai" | "cocoro" | "gemini";
 
 /**
  * チャットメッセージのロール
