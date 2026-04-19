@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
+import { setupAutoUpdater } from './updater.js';
 
 const isDev = process.env['NODE_ENV'] === 'development';
 
@@ -78,7 +79,8 @@ ipcMain.handle('agent:exec', async (_event, command: string, cwd: string) => {
 });
 
 app.whenReady().then(() => {
-  createWindow();
+  const win = createWindow();
+  setupAutoUpdater(win);
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

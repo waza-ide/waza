@@ -3,9 +3,12 @@ import { ModelRouter } from '@waza/core';
 import { DesktopAgentLoop } from '../agent/loop.js';
 import type { AgentState } from '../agent/types.js';
 
+import type { MultiFileEdit } from '../types/editor.js';
+
 interface WazaSidebarProps {
   currentFile: string | null;
   rootDir?: string | null;
+  onMultiFileEdit?: (edit: MultiFileEdit) => void;
 }
 
 interface LogEntry {
@@ -33,7 +36,7 @@ function stateToMessage(state: AgentState): string | null {
   }
 }
 
-export function WazaSidebar({ currentFile, rootDir }: WazaSidebarProps): JSX.Element {
+export function WazaSidebar({ currentFile, rootDir, onMultiFileEdit: _onMultiFileEdit }: WazaSidebarProps): JSX.Element {
   const [input, setInput] = useState('');
   const [log, setLog] = useState<LogEntry[]>([]);
   const [agentState, setAgentState] = useState<AgentState>({ status: 'idle' });

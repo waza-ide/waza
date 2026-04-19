@@ -18,4 +18,18 @@ contextBridge.exposeInMainWorld('wazaAPI', {
     exec: (command: string, cwd: string) =>
       ipcRenderer.invoke('agent:exec', command, cwd),
   },
+  updater: {
+    checkForUpdates: () =>
+      ipcRenderer.invoke('updater:checkForUpdates'),
+    downloadUpdate: () =>
+      ipcRenderer.invoke('updater:downloadUpdate'),
+    quitAndInstall: () =>
+      ipcRenderer.invoke('updater:quitAndInstall'),
+    onStatus: (callback: (status: unknown) => void) => {
+      const handler = (_: Electron.IpcRendererEvent, status: unknown): void =>
+        callback(status);
+      ipcRenderer.on('updater:status', handler);
+      return () => ipcRenderer.removeListener('updater:status', handler);
+    },
+  },
 });

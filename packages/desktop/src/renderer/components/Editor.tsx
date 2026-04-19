@@ -1,6 +1,7 @@
 import MonacoEditor from '@monaco-editor/react';
 import { useEffect, useRef, useState } from 'react';
 import type * as Monaco from 'monaco-editor';
+import { detectLanguage } from '../hooks/useEditorTabs.js';
 
 interface OpenFile {
   path: string;
@@ -9,42 +10,27 @@ interface OpenFile {
 
 interface EditorProps {
   file: OpenFile | null;
-  onSave: (content: string) => Promise<void>;
+  onSave: () => Promise<void>;
+  onChange?: (content: string) => void;
 }
 
-function detectLanguage(filePath: string): string {
-  const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
-  const map: Record<string, string> = {
-    ts: 'typescript', tsx: 'typescript',
-    js: 'javascript', jsx: 'javascript',
-    py: 'python', rs: 'rust',
-    md: 'markdown', json: 'json',
-    yaml: 'yaml', yml: 'yaml',
-    html: 'html', css: 'css',
-    sh: 'shell', toml: 'toml',
-    go: 'go', rb: 'ruby',
-    java: 'java', cpp: 'cpp', c: 'c',
-    cs: 'csharp', php: 'php', swift: 'swift',
-    kt: 'kotlin', scala: 'scala',
-  };
-  return map[ext] ?? 'plaintext';
-}
-
-export function Editor({ file, onSave }: EditorProps): JSX.Element {
+export function Editor({ file, onSave, onChange }: EditorProps): JSX.Element {
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const onSaveRef = useRef(onSave);
+  onSaveRef.current = onSave;
 
   // Ctrl+S / Cmd+S で保存
   useEffect(() => {
     async function handleKeyDown(e: KeyboardEvent): Promise<void> {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        if (!editorRef.current || !file) return;
+        if (!file) return;
         setSaving(true);
         setSaved(false);
         try {
-          await onSave(editorRef.current.getValue());
+          await onSaveRef.current();
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);
         } finally {
@@ -54,7 +40,7 @@ export function Editor({ file, onSave }: EditorProps): JSX.Element {
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onSave, file]);
+  }, [file]);
 
   if (!file) {
     return (
@@ -77,52 +63,46 @@ export function Editor({ file, onSave }: EditorProps): JSX.Element {
 
   return (
     <div style={{ height: '100%', position: 'relative', display: 'flex', flexDirection: 'column' }}>
-      {/* タブバー */}
-      <div style={{
-        padding: '0 16px',
-        height: 35,
-        borderBottom: '1px solid #21262d',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        background: '#161b22',
-        flexShrink: 0,
-      }}>
-        <span style={{ fontSize: 12, color: '#c9d1d9', opacity: 0.8 }}>
-          {file.path.split('/').pop()}
-        </span>
-        {saving && (
-          <span style={{ fontSize: 11, color: '#8b949e' }}>保存中...</span>
-        )}
-        {saved && (
-          <span style={{ fontSize: 11, color: '#3fb950' }}>✓ 保存完了</span>
-        )}
-      </div>
+      {/* 保存状態インジケーター */}
+      {(saving || saved) && (
+        <div style={{
+          position: 'absolute',
+          top: 8,
+          right: 16,
+          fontSize: 11,
+          color: saved ? '#3fb950' : '#8b949e',
+          zIndex: 10,
+          background: '#0d1117',
+          padding: '2px 6px',
+          borderRadius: 4,
+        }}>
+          {saving ? '保存中...' : '✓ 保存完了'}
+        </div>
+      )}
 
       {/* Monaco Editor */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
-        <MonacoEditor
-          height="100%"
-          theme="vs-dark"
-          language={detectLanguage(file.path)}
-          value={file.content}
-          onMount={editor => { editorRef.current = editor; }}
-          options={{
-            fontSize: 14,
-            fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace',
-            fontLigatures: true,
-            minimap: { enabled: true },
-            scrollBeyondLastLine: false,
-            wordWrap: 'on',
-            lineNumbers: 'on',
-            renderLineHighlight: 'all',
-            smoothScrolling: true,
-            cursorBlinking: 'smooth',
-            cursorSmoothCaretAnimation: 'on',
-            bracketPairColorization: { enabled: true },
-          }}
-        />
-      </div>
+      <MonacoEditor
+        height="100%"
+        theme="vs-dark"
+        language={detectLanguage(file.path)}
+        value={file.content}
+        onMount={editor => { editorRef.current = editor; }}
+        onChange={value => onChange?.(value ?? '')}
+        options={{
+          fontSize: 14,
+          fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace',
+          fontLigatures: true,
+          minimap: { enabled: true },
+          scrollBeyondLastLine: false,
+          wordWrap: 'on',
+          lineNumbers: 'on',
+          renderLineHighlight: 'all',
+          smoothScrolling: true,
+          cursorBlinking: 'smooth',
+          cursorSmoothCaretAnimation: 'on',
+          bracketPairColorization: { enabled: true },
+        }}
+      />
     </div>
   );
 }

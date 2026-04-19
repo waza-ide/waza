@@ -2,6 +2,12 @@ appId: dev.waza-ide.waza
 productName: Waza
 copyright: Copyright © 2026 mdl-systems
 
+publish:
+  provider: github
+  owner: waza-ide
+  repo: waza
+  releaseType: release
+
 directories:
   output: release
   buildResources: build
