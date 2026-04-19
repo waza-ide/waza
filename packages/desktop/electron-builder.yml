@@ -6,6 +6,8 @@ directories:
   output: release
   buildResources: build
 
+artifactName: waza_${version}_${arch}.${ext}
+
 files:
   - dist/**
   - node_modules/**
@@ -19,6 +21,7 @@ linux:
   icon: build/icon.png
 
 deb:
+  maintainer: "mdl-systems <dev@waza-ide.dev>"
   depends:
     - libgtk-3-0
     - libnotify4

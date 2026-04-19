@@ -23,7 +23,7 @@ function createWindow(): BrowserWindow {
     void win.loadURL('http://localhost:5173');
     win.webContents.openDevTools();
   } else {
-    void win.loadFile(path.join(__dirname, '../renderer/index.html'));
+    void win.loadFile(path.join(__dirname, '../../renderer/index.html'));
   }
 
   return win;
