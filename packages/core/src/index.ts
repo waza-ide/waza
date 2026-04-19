@@ -83,3 +83,7 @@ export { renderAutomationPrompt } from "./automation/types.js";
 // Codex Mode — Model Telemetry (Phase 4)
 export type { HealthCheckResult, HealthCheckable, ProviderTelemetry } from "./providers/health.js";
 export { isHealthCheckable } from "./providers/health.js";
+
+// cocoro-llm-server LocalProvider (Phase 5+)
+export { LocalProvider } from "./providers/LocalProvider.js";
+export type { LocalProviderConfig } from "./providers/LocalProvider.js";

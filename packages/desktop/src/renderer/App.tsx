@@ -9,7 +9,6 @@ import { StatusBar } from './components/layout/StatusBar.js';
 import { TabBar } from './components/TabBar.js';
 import { Editor } from './components/Editor.js';
 import { WelcomeScreen } from './components/WelcomeScreen.js';
-import { AgentPanel } from './components/AgentPanel.js';
 import { AgentPanelV2 } from './components/AgentPanelV2.js';
 import { Composer } from './components/Composer.js';
 import type { ModelId } from './components/Composer.js';
@@ -19,7 +18,6 @@ import { DesktopAgentLoop } from './agent/loop.js';
 import type { AgentState } from './agent/types.js';
 import type { MultiFileEdit } from './types/editor.js';
 import { useTaskStore } from './stores/taskStore.js';
-import type { Task } from '@waza/core';
 import { ReviewModal } from './components/review/ReviewModal.js';
 import type { ReviewRequest, GatewayDecision } from '@waza/core';
 
@@ -63,7 +61,6 @@ export function App(): JSX.Element {
           });
         })
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const {
@@ -151,6 +148,7 @@ export function App(): JSX.Element {
   const isRunning = currentState.status === 'thinking' || currentState.status === 'acting';
 
   return (
+    <>
     <div style={{
       height: '100vh',
       width: '100vw',
@@ -329,5 +327,6 @@ export function App(): JSX.Element {
         onDecision={resolveReview}
       />
     )}
+    </>
   );
 }

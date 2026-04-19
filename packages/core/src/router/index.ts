@@ -2,13 +2,15 @@ import { ClaudeProvider } from "../providers/claude.js";
 import { GeminiProvider } from "../providers/gemini.js";
 import { OllamaProvider } from "../providers/ollama.js";
 import { CocoroCLMProvider } from "../providers/cocoro_clm.js";
+import { LocalProvider } from "../providers/LocalProvider.js";
+import type { LocalProviderConfig } from "../providers/LocalProvider.js";
 import type { BaseProvider } from "../providers/base.js";
 import type { ModelConfig } from "../models/config.js";
 
 // cocoro-llm-server (mdl-systems internal GPU server: RTX PRO 6000 Blackwell)
 const COCORO_CLM_URL = "http://192.168.50.112:8000";
 const COCORO_CLM_API_KEY = "mdl-llm-2026";
-const COCORO_CLM_MODEL = "gpt-4o"; // alias for Qwen 2.5 72B AWQ
+const COCORO_CLM_MODEL = "qwen25-72b"; // Qwen 2.5 72B Instruct AWQ (実名)
 
 const COCORO_URL = "http://localhost:8001";
 const OLLAMA_URL = "http://localhost:11434";
@@ -106,6 +108,45 @@ export class ModelRouter {
       kind: "claude",
       model: "claude-sonnet-4-5",
       apiKey: process.env["ANTHROPIC_API_KEY"],
+    });
+  }
+
+  /**
+   * preferLocalModel=true 時: LocalProvider を優先し、障害時は cloud にフォールバックする。
+   * preferLocalModel=false 時: cloud を使用する。
+   *
+   * extension/src/router/index.ts から呼ばれる用途向け。
+   * localConfig が未指定の場合はデフォルト値 (192.168.50.112) を使う。
+   */
+  async routeWithPreference(
+    preferLocal: boolean,
+    localConfig?: Partial<LocalProviderConfig>,
+    cloudApiKey?: string
+  ): Promise<import('../providers/base.js').BaseProvider> {
+    const local = new LocalProvider({
+      baseUrl:  localConfig?.baseUrl  ?? `${COCORO_CLM_URL}/v1`,
+      apiKey:   localConfig?.apiKey   ?? COCORO_CLM_API_KEY,
+      model:    localConfig?.model    ?? COCORO_CLM_MODEL,
+      maxTokens: localConfig?.maxTokens,
+      timeoutMs: localConfig?.timeoutMs,
+    });
+
+    if (!preferLocal) {
+      return new ClaudeProvider({
+        kind:   'claude',
+        model:  'claude-sonnet-4-5',
+        apiKey: cloudApiKey ?? process.env['ANTHROPIC_API_KEY'],
+      });
+    }
+
+    const available = await local.isAvailable();
+    if (available) return local;
+
+    // フォールバック: cloud
+    return new ClaudeProvider({
+      kind:   'claude',
+      model:  'claude-sonnet-4-5',
+      apiKey: cloudApiKey ?? process.env['ANTHROPIC_API_KEY'],
     });
   }
 
