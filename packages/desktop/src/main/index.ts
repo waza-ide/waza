@@ -5,6 +5,7 @@ import { setupAutoUpdater } from './updater.js';
 import { setupTaskIpc } from './ipc/task.js';
 
 const isDev = process.env['NODE_ENV'] === 'development';
+const isMac = process.platform === 'darwin';
 
 function createWindow(): BrowserWindow {
   // Hide the native menu bar (File/Edit/View etc)
@@ -15,13 +16,14 @@ function createWindow(): BrowserWindow {
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    backgroundColor: '#00000000',   // transparent for rounded corners
-    transparent: true,              // enables rounded corners via CSS
-    titleBarStyle: 'hidden',
-    trafficLightPosition: { x: 14, y: 12 },
-    roundedCorners: true,           // macOS native rounded — on Linux handled by WM
+    // transparent window only works reliably on macOS
+    // on Linux it causes a white screen (compositor issue)
+    backgroundColor: isMac ? '#00000000' : '#0d1117',
+    transparent: isMac,
+    titleBarStyle: isMac ? 'hidden' : 'default',
+    trafficLightPosition: isMac ? { x: 14, y: 12 } : undefined,
+    roundedCorners: isMac,
     hasShadow: true,
-    vibrancy: undefined,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
