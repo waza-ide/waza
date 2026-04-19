@@ -42,6 +42,7 @@ export function App(): JSX.Element {
   const [resolveReview, setResolveReview] = useState<((d: GatewayDecision) => void) | null>(null);
   const [threadName, setThreadName] = useState<string | null>(null);
   const [showAgentPanel, setShowAgentPanel] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Thread groups (empty = file tree mode)
   const [threadGroups] = useState<ThreadGroup[]>([]);
@@ -169,87 +170,133 @@ export function App(): JSX.Element {
       {/* Main body */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-        {/* Left column: Sidebar + Agent panel */}
+        {/* Left column: Sidebar + Threads panel — collapsible */}
         <div style={{
-          width: tokens.layout.sidebar,
+          width: sidebarCollapsed ? 40 : tokens.layout.sidebar,
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
           background: tokens.color.bg.sidebar,
           borderRight: `1px solid ${tokens.color.bg.border}`,
+          transition: 'width 200ms ease',
         }}>
-          {/* Sidebar — file tree & navigation */}
-          <Sidebar
-            rootDir={rootDir}
-            onOpenFolder={handleOpenFolder}
-            onSelectFile={openTab}
-            selectedPath={activeTab?.path ?? null}
-            threadGroups={threadGroups}
-            activeThreadId={activeThreadId}
-            onSelectThread={() => {}}
-            onNewThread={handleNewThread}
-          />
-
-          {/* Agent panel — below sidebar, above nothing */}
-          {showAgentPanel && (
-            <div style={{
-              flex: 1,
-              borderTop: `1px solid ${tokens.color.bg.borderSub}`,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              minHeight: 120,
-            }}>
-              {/* Panel header */}
-              <div style={{
-                height: 28,
-                padding: `0 ${tokens.space.md}px`,
-                borderBottom: `1px solid ${tokens.color.bg.borderSub}`,
-                display: 'flex',
+          {/* Collapse / expand toggle */}
+          <div style={{
+            height: 28,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-end',
+            paddingRight: sidebarCollapsed ? 0 : tokens.space.sm,
+            flexShrink: 0,
+          }}>
+            <button
+              id="sidebar-toggle-btn"
+              onClick={() => setSidebarCollapsed(p => !p)}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              style={{
+                display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                flexShrink: 0,
-              }}>
-                <span style={{
-                  fontSize: tokens.font.size.xs,
-                  fontWeight: tokens.font.weight.semibold,
-                  color: tokens.color.text.tertiary,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                }}>
-                  Agent
-                </span>
-                <button
-                  id="close-agent-panel-btn"
-                  onClick={() => setShowAgentPanel(false)}
-                  title="Close panel"
-                  style={{
-                    color: tokens.color.text.tertiary,
-                    fontSize: 14,
-                    lineHeight: 1,
-                    padding: '2px 4px',
-                    borderRadius: tokens.radius.sm,
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.primary;
-                    (e.currentTarget as HTMLButtonElement).style.background = tokens.color.bg.active;
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.tertiary;
-                    (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-                  }}
-                >
-                  ×
-                </button>
-              </div>
+                justifyContent: 'center',
+                width: 24,
+                height: 24,
+                borderRadius: tokens.radius.sm,
+                border: 'none',
+                background: 'transparent',
+                color: tokens.color.text.tertiary,
+                fontSize: 14,
+                cursor: 'pointer',
+                transition: `color ${tokens.transition.fast}`,
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.primary;
+                (e.currentTarget as HTMLButtonElement).style.background = tokens.color.bg.active;
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.tertiary;
+                (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+              }}
+            >
+              {sidebarCollapsed ? '▸' : '◂'}
+            </button>
+          </div>
 
-              {/* Agent panel v2 — taskStore view */}
-              <AgentPanelV2 />
-            </div>
+          {/* Content only when expanded */}
+          {!sidebarCollapsed && (
+            <>
+              {/* Sidebar — file tree & navigation */}
+              <Sidebar
+                rootDir={rootDir}
+                onOpenFolder={handleOpenFolder}
+                onSelectFile={openTab}
+                selectedPath={activeTab?.path ?? null}
+                threadGroups={threadGroups}
+                activeThreadId={activeThreadId}
+                onSelectThread={() => {}}
+                onNewThread={handleNewThread}
+              />
+
+              {/* Threads panel — below sidebar */}
+              {showAgentPanel && (
+                <div style={{
+                  flex: 1,
+                  borderTop: `1px solid ${tokens.color.bg.borderSub}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                  minHeight: 120,
+                }}>
+                  {/* Panel header */}
+                  <div style={{
+                    height: 28,
+                    padding: `0 ${tokens.space.md}px`,
+                    borderBottom: `1px solid ${tokens.color.bg.borderSub}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexShrink: 0,
+                  }}>
+                    <span style={{
+                      fontSize: tokens.font.size.xs,
+                      fontWeight: tokens.font.weight.semibold,
+                      color: tokens.color.text.tertiary,
+                      letterSpacing: '0.05em',
+                      textTransform: 'uppercase',
+                    }}>
+                      Threads
+                    </span>
+                    <button
+                      id="close-agent-panel-btn"
+                      onClick={() => setShowAgentPanel(false)}
+                      title="Close panel"
+                      style={{
+                        color: tokens.color.text.tertiary,
+                        fontSize: 14,
+                        lineHeight: 1,
+                        padding: '2px 4px',
+                        borderRadius: tokens.radius.sm,
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.primary;
+                        (e.currentTarget as HTMLButtonElement).style.background = tokens.color.bg.active;
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.tertiary;
+                        (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {/* Agent panel v2 — taskStore view */}
+                  <AgentPanelV2 />
+                </div>
+              )}
+            </>
           )}
         </div>
 

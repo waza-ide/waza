@@ -79,7 +79,7 @@ export function Sidebar({
       flexDirection: 'column',
       overflow: 'hidden',
     }}>
-      {/* Top nav — Codex style */}
+      {/* Top nav — New thread, Automations, Skills */}
       <div style={{
         padding: `${tokens.space.xs}px 0`,
         flexShrink: 0,
@@ -106,6 +106,8 @@ export function Sidebar({
               opacity: item.enabled ? 1 : 0.45,
               transition: `background ${tokens.transition.fast}, color ${tokens.transition.fast}`,
               borderRadius: 0,
+              border: 'none',
+              fontFamily: tokens.font.sans,
             }}
             onMouseEnter={e => {
               if (item.enabled) {
@@ -138,10 +140,9 @@ export function Sidebar({
         margin: `0 ${tokens.space.md}px`,
       }} />
 
-      {/* Content area */}
+      {/* Content area — thread list or file tree (no "Waza" / "Open Folder" heading) */}
       <div style={{ flex: 1, overflow: 'auto', paddingTop: tokens.space.xs }}>
         {threadGroups.length > 0 ? (
-          /* Thread list — Codex style */
           <div>
             {threadGroups.map(group => (
               <div key={group.name}>
@@ -177,6 +178,8 @@ export function Sidebar({
                       textAlign: 'left',
                       cursor: 'pointer',
                       transition: `background ${tokens.transition.fast}`,
+                      border: 'none',
+                      fontFamily: tokens.font.sans,
                     }}
                     onMouseEnter={e => {
                       if (activeThreadId !== thread.id)
@@ -209,7 +212,6 @@ export function Sidebar({
             ))}
           </div>
         ) : (
-          /* No threads → file tree */
           <FileTree
             rootDir={rootDir}
             onSelectFile={onSelectFile}
