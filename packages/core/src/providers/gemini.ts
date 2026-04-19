@@ -7,12 +7,13 @@ import type {
   ProviderKind,
 } from '../models/types.js';
 import { BaseProvider } from './base.js';
+import type { HealthCheckable, HealthCheckResult } from './health.js';
 
 /**
  * Gemini API プロバイダー実装
  * デフォルトモデル: gemini-2.0-flash
  */
-export class GeminiProvider extends BaseProvider {
+export class GeminiProvider extends BaseProvider implements HealthCheckable {
   private readonly genAI: GoogleGenerativeAI;
 
   constructor(config: ProviderConfig) {
@@ -103,5 +104,18 @@ export class GeminiProvider extends BaseProvider {
     });
 
     return { history, lastUserMessage };
+  }
+
+  async healthCheck(): Promise<HealthCheckResult> {
+    const start = Date.now();
+    try {
+      // List models to verify API key and connectivity
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      // Minimal request: count tokens for empty string
+      await model.countTokens({ contents: [{ role: 'user', parts: [{ text: 'ping' }] }] });
+      return { ok: true, latencyMs: Date.now() - start, detail: 'gemini-2.0-flash' };
+    } catch {
+      return { ok: false, latencyMs: Date.now() - start };
+    }
   }
 }

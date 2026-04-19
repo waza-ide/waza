@@ -1,0 +1,6 @@
+{
+  "waza.preferLocalModel": true,
+  "waza.localModelUrl": "http://192.168.50.112:8000/v1",
+  "waza.localModel": "qwen25-72b",
+  "waza.localApiKey": ""
+}

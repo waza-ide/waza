@@ -32,4 +32,19 @@ contextBridge.exposeInMainWorld('wazaAPI', {
       return () => ipcRenderer.removeListener('updater:status', handler);
     },
   },
+  // Codex Mode Phase 3 — Task IPC
+  task: {
+    create: (payload: unknown) =>
+      ipcRenderer.invoke('task:create', payload),
+    control: (payload: unknown) =>
+      ipcRenderer.invoke('task:control', payload),
+    snapshot: () =>
+      ipcRenderer.invoke('task:snapshot'),
+    onUpdate: (callback: (patch: unknown) => void) => {
+      const handler = (_: Electron.IpcRendererEvent, patch: unknown): void =>
+        callback(patch);
+      ipcRenderer.on('task:update', handler);
+      return () => ipcRenderer.removeListener('task:update', handler);
+    },
+  },
 });

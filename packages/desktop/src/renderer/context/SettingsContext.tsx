@@ -1,6 +1,10 @@
 /**
- * SettingsContext — Global configuration store
+ * SettingsContext — Global configuration store (Phase 5 update)
  * Persisted to localStorage. Accessible via useSettings().
+ *
+ * Phase 5 additions:
+ * - skills: enabled Skill IDs (array of string)
+ * - Version bumped to waza-settings-v2 to avoid conflicts
  */
 import {
   createContext,
@@ -48,6 +52,9 @@ export interface WazaSettings {
   editorFontSize: number;
   editorFontFamily: string;
   wordWrap: boolean;
+
+  // Codex Mode Phase 4 — enabled Skill IDs
+  activeSkillIds: string[];
 }
 
 const DEFAULTS: WazaSettings = {
@@ -64,9 +71,10 @@ const DEFAULTS: WazaSettings = {
   editorFontSize:   14,
   editorFontFamily: '"JetBrains Mono", "SF Mono", "Fira Code", monospace',
   wordWrap:         true,
+  activeSkillIds:   [],
 };
 
-const LS_KEY = 'waza-settings-v1';
+const LS_KEY = 'waza-settings-v2';
 
 function load(): WazaSettings {
   try {
@@ -92,6 +100,7 @@ interface SettingsContextValue {
   settings: WazaSettings;
   updateSettings: (patch: Partial<WazaSettings>) => void;
   resetSettings: () => void;
+  toggleSkill: (skillId: string) => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -113,8 +122,20 @@ export function SettingsProvider({ children }: { children: ReactNode }): JSX.Ele
     setSettings(def);
   }, []);
 
+  const toggleSkill = useCallback((skillId: string): void => {
+    setSettings(prev => {
+      const ids = prev.activeSkillIds;
+      const next = ids.includes(skillId)
+        ? ids.filter(id => id !== skillId)
+        : [...ids, skillId];
+      const updated = { ...prev, activeSkillIds: next };
+      save(updated);
+      return updated;
+    });
+  }, []);
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, resetSettings }}>
+    <SettingsContext.Provider value={{ settings, updateSettings, resetSettings, toggleSkill }}>
       {children}
     </SettingsContext.Provider>
   );

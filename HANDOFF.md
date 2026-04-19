@@ -2,104 +2,109 @@
 
 ## 最終更新
 - 日時: 2026-04-19
-- 担当エージェント: Antigravity (Phase 11: v0.5.0 ライト/ダークテーマ)
+- 担当エージェント: Antigravity (GitHub Release v1.5.0)
+- Branch: `phase-11-codex-ui`
+- Release: **v1.5.0 — リリース準備完了**
 
-## 完了タスク
-- [Phase 1] モノレポ初期構造（CLAUDE.md / AGENTS.md / STRUCTURE.md / pnpm workspace）
-- [Phase 1] .claude/ ハーネス / 4パッケージ骨格 / CI / CodeRabbit / LICENSE
-- [Phase 3] ModelRouter / AgentLoop / WazaPanel / テスト 7/7 pass
-- [genshijin] .claude/skills/genshijin/SKILL.md 導入
-- [Phase 5] VSIX生成・README・CHANGELOG・release.yml・v0.1.0タグ push
-- [Phase 6] cocoro-bridge: zodバリデーション / APIキー認証 / リトライ / detectLocalModels
-- [Phase 6] ui: DiffViewWithContent（diffLines / 折りたたみ / y/n キーボードショートカット）
-- [Phase 6] core: GeminiProvider 実装 / ModelRouter に gemini フォールバック追加
-- [Phase 6] ProviderKind / ModelConfig に "gemini" 追加（FROZEN types.ts に追記）
-- [Phase 6] 全テスト: cocoro-bridge 10/10 / ui 5/5 / core 4/4 / extension 7/7 pass
-- [Phase 6] commit: ad5e2f4
-- [Phase 7] packages/desktop/ 新規作成（Electron v29 + Monaco + React）
-  - src/main/index.ts — IPC handlers（readFile/writeFile/readDir/openFolder）
-  - src/preload/index.ts — contextBridge（window.wazaAPI）
-  - src/renderer/App.tsx — 3ペインレイアウト（FileTree/Editor/WazaSidebar）
-  - src/renderer/components/FileTree.tsx — 再帰展開ファイルツリー
-  - src/renderer/components/Editor.tsx — Monaco + Ctrl+S保存
-  - src/renderer/components/WazaSidebar.tsx — ModelRouter連携チャットUI
-  - tsconfig.main/renderer / vite.config.ts / electron-builder.yml / AGENTS.md
-  - build:main ✅ / build:renderer ✅（253KB bundle）
-- [Phase 7] .deb パッケージ生成 ✅ — `waza_0.1.0_amd64.deb` (80MB)
-  - executableName: waza 修正（@wazadesktop → waza）
-  - commit: 7e9d536
-- [Phase 8] v0.2.0 リリース ✅
-  - FileTree再帰展開（TreeNodeベース遅延ロード / IGNORE / ソート / カラー / 選択ハイライト）
-  - DesktopAgentLoop移植（src/renderer/agent/loop.ts + types.ts）
-    - VSCode依存完全除去（vscode.window.* / vscode.Disposable → コールバック/IPC）
-    - parseModelResponse: TOOL: / DONE: / text パース（export済みテスト可能）
-    - dispatchTool: read_file / write_file / exec_command
-  - IPC agent:exec 追加（mainプロセスでexecSync実行, timeout=30s）
-  - WazaSidebar: DesktopAgentLoop差し替え + 停止ボタン + 状態表示
-  - vitest追加: desktop 13/13 / 全パッケージ 34/34 pass
-  - waza_0.2.0_amd64.deb 生成確認 (80MB)
-  - commit: 34b565d / tag: v0.2.0 push済み
-- [Phase 5] VSIX生成・README・CHANGELOG・release.yml・v0.1.0タグ push
-- [Phase 6] cocoro-bridge: zodバリデーション / APIキー認証 / リトライ / detectLocalModels
-- [Phase 6] ui: DiffViewWithContent（diffLines / 折りたたみ / y/n キーボードショートカット）
-- [Phase 6] core: GeminiProvider 実装 / ModelRouter に gemini フォールバック追加
-- [Phase 6] ProviderKind / ModelConfig に "gemini" 追加（FROZEN types.ts に追記）
-- [Phase 6] 全テスト: cocoro-bridge 10/10 / ui 5/5 / core 4/4 / extension 7/7 pass
-- [Phase 6] commit: ad5e2f4
-- [Phase 7] packages/desktop/ 新規作成（Electron v29 + Monaco + React）
-  - src/main/index.ts — IPC handlers（readFile/writeFile/readDir/openFolder）
-  - src/preload/index.ts — contextBridge（window.wazaAPI）
-  - src/renderer/App.tsx — 3ペインレイアウト（FileTree/Editor/WazaSidebar）
-  - src/renderer/components/FileTree.tsx — 再帰展開ファイルツリー
-  - src/renderer/components/Editor.tsx — Monaco + Ctrl+S保存
-  - src/renderer/components/WazaSidebar.tsx — ModelRouter連携チャットUI
-  - tsconfig.main/renderer / vite.config.ts / electron-builder.yml / AGENTS.md
-  - build:main ✅ / build:renderer ✅（253KB bundle）
-- [Phase 7] .deb パッケージ生成 ✅ — `waza_0.1.0_amd64.deb` (80MB) / `waza_0.1.0_x86_64.AppImage` (120MB)
-  - electron-builder.yml: maintainer / artifactName 追記
-  - package.json: author / description / homepage 追記
-  - commit: f116f65
+## バージョン履歴
 
-## 次のタスク（候補）
-- Phase 11 完了 ✅ — v0.5.0 リリース済み (commit: 9a2f5e7 / tag: v0.5.0)
-- [Phase 10] Codex風UIリデザイン:
-  - styles/tokens.ts (デザイントークン) / styles/global.css (グローバルリセット)
-  - layout/TitleBar.tsx (drag-region) / layout/ActivityBar.tsx / layout/Sidebar.tsx
-  - AgentHistory.tsx / AgentPanel.tsx / Composer.tsx
-  - Editor.tsx: tab/onChange(id)/onSave(id) インターフェース統一
-  - App.tsx: ActivityBar(48)+Sidebar(240)+MainArea(flex) / WazaSidebar廃止
-  - layout.test.ts: 19テスト追加 / 全体 64/64 pass
-  - waza_0.4.0_amd64.deb (81MB) 生成済み
-- Phase 11候補: ファイル検索（Cmd+P / インクリメンタルサーチ）
-- Phase 11候補: Search ActivityBar有効化（現在グレーアウト）
-- Phase 11候補: Agent経由マルチファイル編集プロポーザル → MultiFileDiffView表示
-- Phase 11候補: Marketplace正式公開（publisher登録 `waza-ide`・アイコン最適化）
-- Phase 11候補: モデル選択モーダル（Composerの◉ボタンから起動）
+| Tag | Branch | 内容 |
+|---|---|---|
+| v0.6.0 | codex-mode/phase-1-foundation | Task/Step 型 + Zustand + Logger |
+| v0.7.0 | codex-mode/phase-2-gateway | Review Gateway |
+| v0.8.0 | codex-mode/phase-3-scheduler | TaskQueue + IPC |
+| v0.9.0 | codex-mode/phase-4-skill-automation | Skill / Automation / Telemetry |
+| v1.0.0 | codex-mode/phase-5-ui-integration | UI MVP 完成 |
+| **v1.5.0** | **phase-11-codex-ui** | **Codex UI + LocalProvider + GitHub Release** |
 
+## 生成アーティファクト (v1.5.0)
 
-## 未解決事項
-- packages/extension/src/router/index.ts — Phase 1 旧実装残存（未使用）
-- アイコン icon.png が384KB（Marketplace提出前に最適化必要）
-- FROZEN types.ts に "gemini" を追記済み（union拡張のため破壊なし）
-- @anthropic-ai/sdk の isAvailable() は models.list() を使用（API変更時に修正必要）
-- FileTree: ルートのエントリーのみ表示（サブディレクトリのクリック展開は状態管理のみで再帰fetchなし）
+| ファイル | サイズ | 場所 |
+|---|---|---|
+| `waza-1.5.0.vsix` | 398 KB | `packages/extension/` |
+| `waza_1.5.0_amd64.deb` | 81 MB | `packages/desktop/release/` |
+| `waza_1.5.0_x86_64.AppImage` | 120 MB | `packages/desktop/release/` |
 
-## Electron 開発サーバー起動手順
+## GitHub Release 手順（gh CLI 未インストールのため手動）
+
+`gh` のインストール（要 sudo パスワード）:
 ```bash
-export PATH="$HOME/.local/share/pnpm:$PATH"
-
-# Terminal 1（renderer Vite dev server）
-cd packages/desktop && pnpm dev:renderer
-
-# Terminal 2（Electron起動）
-NODE_ENV=development pnpm -F @waza/desktop electron
+sudo apt-get install -y gh
+gh auth login
 ```
 
+インストール後のリリースコマンド:
+```bash
+gh release create v1.5.0 \
+  packages/extension/waza-1.5.0.vsix \
+  packages/desktop/release/waza_1.5.0_amd64.deb \
+  packages/desktop/release/waza_1.5.0_x86_64.AppImage \
+  --title "Waza v1.5.0 — Codex-inspired UI + Light/Dark theme + Local model support" \
+  --notes-file docs/release-notes/v1.5.0.md \
+  --repo waza-ide/waza
+
+# push タグも送る
+git push origin phase-11-codex-ui
+git push origin v1.5.0
+```
+
+または手動: https://github.com/waza-ide/waza/releases/new
+- Tag: `v1.5.0`
+- Title: `Waza v1.5.0 — Codex-inspired UI + Light/Dark theme + Local model support`
+- Description: `docs/release-notes/v1.5.0.md` の内容を貼り付け
+- Assets: vsix + deb + AppImage をアップロード
+
+過去の Draft Release 整理:
+```bash
+for v in v0.1.0 v0.2.0 v0.3.0 v0.4.0 v0.5.0 v0.5.1 v0.5.2 v0.5.3 v0.5.4; do
+  gh release delete $v --repo waza-ide/waza --yes 2>/dev/null && echo "deleted $v"
+done
+```
+
+## リリースドキュメント
+
+| ファイル | 内容 |
+|---|---|
+| `docs/release-notes/v1.5.0.md` | English リリースノート (GitHub Release 掲載用) |
+| `docs/release-notes/announce_v150.md` | X / Zenn / GitHub Discussions 告知テキスト |
+| `README.md` | v1.5.0 対応全面更新済み |
+
+## テスト (375/375 ✅)
+
+| パッケージ | テスト数 |
+|---|---|
+| core | 213 |
+| desktop | 132 |
+| extension | 15 |
+| cocoro-bridge | 10 |
+| ui | 5 |
+| **Total** | **375** |
+
+## cocoro-llm-server 接続
+
+| 項目 | 値 |
+|---|---|
+| エンドポイント | http://192.168.50.112:8000/v1 |
+| モデル | qwen25-72b |
+| ヘルスチェック | GET /v1/models |
+| API キー | 環境変数 `WAZA_LOCAL_API_KEY` |
+
+## 残件 (v1.6.0)
+
+1. GitHub Release v1.5.0 正式公開（`gh release create` 実行）
+2. 過去 Draft Release クリーンアップ
+3. **Automation Engine** — cron/file-watch を Main process で実装
+4. **task:update applyPatch()** — IPC push → taskStore 自動更新
+5. **TaskRunner drain-loop** — 真の非同期スケジューリング
+6. **SkillsPanel カスタム Skill 永続化** — localStorage
+7. **StatusBar branch 表示** — `wazaAPI.git.branch()` IPC
+
 ## 注意事項
-- packages/extension/src/extension.ts は # FROZEN（変更前に確認）
-- packages/core/src/models/types.ts は # FROZEN（gemini追加は承認済み）
-- packages/core/src/providers/base.ts は # FROZEN
-- core の dist/ をビルドしてから extension の typecheck を実行
-- pnpm は `~/.local/share/pnpm/pnpm` にある（PATH要export）
-- `pnpm -r build` は desktop パッケージを含む（5パッケージ）
-- packages/desktop/release/ は .gitignore 対象（バイナリは大きすぎるため）
+
+- **FROZEN**: `base.ts` / `models/types.ts` / `extension.ts`
+- **gitignore**: `.vscode/settings.json` → `.vscode/settings.json.example` 参照
+- **qwen25-72b** が正式モデル名（gpt-4o エイリアス非推奨）
+- `useTheme()` 経由で tokens を取得。ハードコード色禁止
+- StatusBar cocoro 死活: GET /v1/models (not /health)
+- pnpm: `~/.local/share/pnpm/pnpm` (PATH export 必須)
+- core build → test 順序を守ること

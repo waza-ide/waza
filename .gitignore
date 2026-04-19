@@ -8,3 +8,4 @@ out/
 .claude/memory/
 .claude/agent_memory/
 packages/desktop/release/
+.vscode/settings.json

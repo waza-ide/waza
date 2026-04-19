@@ -7,11 +7,12 @@ import type {
   ProviderKind,
 } from "../models/types.js";
 import { BaseProvider } from "./base.js";
+import type { HealthCheckable, HealthCheckResult } from "./health.js";
 
 /**
  * Claude API プロバイダー実装
  */
-export class ClaudeProvider extends BaseProvider {
+export class ClaudeProvider extends BaseProvider implements HealthCheckable {
   private readonly client: Anthropic;
 
   constructor(config: ProviderConfig) {
@@ -94,5 +95,17 @@ export class ClaudeProvider extends BaseProvider {
     }
 
     yield { delta: "", done: true };
+  }
+
+  async healthCheck(): Promise<HealthCheckResult> {
+    const start = Date.now();
+    try {
+      // List models as a lightweight connectivity check
+      const models = await this.client.models.list();
+      const detail = models.data?.[0]?.id ?? 'connected';
+      return { ok: true, latencyMs: Date.now() - start, detail };
+    } catch {
+      return { ok: false, latencyMs: Date.now() - start };
+    }
   }
 }
