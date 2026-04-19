@@ -1,8 +1,11 @@
 /**
- * taskStore — Zustand store for Codex Mode Task/Step state (Phase 1)
+ * taskStore — Zustand store for Codex Mode Task/Step state (Phase 3)
  *
- * All mutations are immutable (spreading) so Zustand's shallow equality
- * works correctly with React subscriptions.
+ * Phase 3 additions:
+ * - TaskControl: pause / resume / cancel / retry — delegate to wazaAPI.task.control()
+ * - applyPatch(): receives task:update events from Main process and merges them
+ * - All mutations are immutable (spreading) so Zustand's shallow equality
+ *   works correctly with React subscriptions.
  */
 import { create } from 'zustand';
 import type { Task, Step, LogEntry, TaskAction } from '@waza/core';
@@ -24,6 +27,22 @@ export interface TaskStoreState {
   appendLog:          (taskId: string, stepId: string, log: LogEntry) => void;
   setActive:          (taskId: string | null) => void;
   clearTasks:         () => void;
+
+  // ── Phase 3: TaskControl (delegate to Main via IPC) ──
+  pauseTask:   (taskId: string) => void;
+  resumeTask:  (taskId: string) => void;
+  cancelTask:  (taskId: string) => void;
+  retryTask:   (taskId: string, extraPrompt?: string) => void;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+/** Send a control action to the Main process via IPC (no-op in tests) */
+function ipcControl(taskId: string, action: string, extraPrompt?: string): void {
+  if (typeof window === 'undefined') return;
+  const api = (window as unknown as { wazaAPI?: { task?: { control?: (p: unknown) => void } } }).wazaAPI;
+  if (!api?.task?.control) return;
+  api.task.control({ taskId, action, extraPrompt });
 }
 
 // ─── Store ─────────────────────────────────────────────────────────────────
@@ -117,4 +136,62 @@ export const useTaskStore = create<TaskStoreState>((set) => ({
   setActive: (taskId) => set({ activeTaskId: taskId }),
 
   clearTasks: () => set({ tasks: {}, activeTaskId: null }),
+
+  // ── Phase 3: TaskControl ──────────────────────────────────────────────
+
+  pauseTask: (taskId) => {
+    ipcControl(taskId, 'pause');
+    set((s) => {
+      const task = s.tasks[taskId];
+      if (!task) return s;
+      return {
+        tasks: {
+          ...s.tasks,
+          [taskId]: { ...task, status: 'paused' as Task['status'], updatedAt: Date.now() },
+        },
+      };
+    });
+  },
+
+  resumeTask: (taskId) => {
+    ipcControl(taskId, 'resume');
+    set((s) => {
+      const task = s.tasks[taskId];
+      if (!task) return s;
+      return {
+        tasks: {
+          ...s.tasks,
+          [taskId]: { ...task, status: 'running', updatedAt: Date.now() },
+        },
+      };
+    });
+  },
+
+  cancelTask: (taskId) => {
+    ipcControl(taskId, 'cancel');
+    set((s) => {
+      const task = s.tasks[taskId];
+      if (!task) return s;
+      return {
+        tasks: {
+          ...s.tasks,
+          [taskId]: { ...task, status: 'cancelled', updatedAt: Date.now() },
+        },
+      };
+    });
+  },
+
+  retryTask: (taskId, extraPrompt) => {
+    ipcControl(taskId, 'retry', extraPrompt);
+    set((s) => {
+      const task = s.tasks[taskId];
+      if (!task) return s;
+      return {
+        tasks: {
+          ...s.tasks,
+          [taskId]: { ...task, status: 'pending', updatedAt: Date.now() },
+        },
+      };
+    });
+  },
 }));

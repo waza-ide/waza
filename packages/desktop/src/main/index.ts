@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import { setupAutoUpdater } from './updater.js';
+import { setupTaskIpc } from './ipc/task.js';
 
 const isDev = process.env['NODE_ENV'] === 'development';
 
@@ -89,6 +90,7 @@ ipcMain.handle('agent:exec', async (_event, command: string, cwd: string) => {
 app.whenReady().then(() => {
   const win = createWindow();
   setupAutoUpdater(win);
+  setupTaskIpc(win);
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

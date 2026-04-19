@@ -9,7 +9,7 @@
 // ─── Task ──────────────────────────────────────────────────────────────────
 
 export type TaskType   = 'thread' | 'automation' | 'skill';
-export type TaskStatus = 'pending' | 'running' | 'done' | 'error' | 'cancelled';
+export type TaskStatus = 'pending' | 'running' | 'paused' | 'done' | 'error' | 'cancelled';
 
 export interface Task {
   id:        string;

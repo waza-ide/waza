@@ -188,3 +188,53 @@ describe('appendAction', () => {
     expect(task.steps).toHaveLength(0);
   });
 });
+
+// ── Phase 3: TaskControl actions ──────────────────────────────────────────
+
+describe('pauseTask', () => {
+  it('sets task status to paused', () => {
+    useTaskStore.getState().createTask(makeTask());
+    useTaskStore.getState().updateTaskStatus('task-1', 'running');
+    useTaskStore.getState().pauseTask('task-1');
+    expect(useTaskStore.getState().tasks['task-1']!.status).toBe('paused');
+  });
+
+  it('does nothing for unknown taskId', () => {
+    const before = useTaskStore.getState().tasks;
+    useTaskStore.getState().pauseTask('ghost');
+    expect(useTaskStore.getState().tasks).toBe(before);
+  });
+});
+
+describe('resumeTask', () => {
+  it('sets task status back to running', () => {
+    useTaskStore.getState().createTask(makeTask());
+    useTaskStore.getState().pauseTask('task-1');
+    useTaskStore.getState().resumeTask('task-1');
+    expect(useTaskStore.getState().tasks['task-1']!.status).toBe('running');
+  });
+});
+
+describe('cancelTask', () => {
+  it('sets task status to cancelled', () => {
+    useTaskStore.getState().createTask(makeTask());
+    useTaskStore.getState().updateTaskStatus('task-1', 'running');
+    useTaskStore.getState().cancelTask('task-1');
+    expect(useTaskStore.getState().tasks['task-1']!.status).toBe('cancelled');
+  });
+});
+
+describe('retryTask', () => {
+  it('sets task status back to pending', () => {
+    useTaskStore.getState().createTask(makeTask());
+    useTaskStore.getState().updateTaskStatus('task-1', 'error');
+    useTaskStore.getState().retryTask('task-1');
+    expect(useTaskStore.getState().tasks['task-1']!.status).toBe('pending');
+  });
+
+  it('does nothing for unknown taskId', () => {
+    const before = useTaskStore.getState().tasks;
+    useTaskStore.getState().retryTask('ghost');
+    expect(useTaskStore.getState().tasks).toBe(before);
+  });
+});
