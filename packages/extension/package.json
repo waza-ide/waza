@@ -1,16 +1,26 @@
 {
   "name": "waza",
-  "displayName": "Waza — AI IDE",
+  "displayName": "Waza \u2014 AI IDE",
   "description": "Privacy-first AI coding agent. Local models supported.",
-  "version": "0.5.2",
+  "version": "1.5.0",
   "publisher": "waza-ide",
   "engines": {
     "vscode": "^1.87.0"
   },
-  "categories": ["AI", "Other"],
+  "categories": [
+    "AI",
+    "Other"
+  ],
   "keywords": [
-    "ai", "agent", "ide", "local-model", "ollama",
-    "privacy", "copilot", "cursor", "waza"
+    "ai",
+    "agent",
+    "ide",
+    "local-model",
+    "ollama",
+    "privacy",
+    "copilot",
+    "cursor",
+    "waza"
   ],
   "icon": "assets/icon.png",
   "galleryBanner": {
@@ -25,7 +35,9 @@
     "url": "https://github.com/waza-ide/waza/issues"
   },
   "homepage": "https://github.com/waza-ide/waza#readme",
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -59,17 +71,17 @@
         "waza.preferLocalModel": {
           "type": "boolean",
           "default": true,
-          "description": "ローカルモデルを優先して使用する"
+          "description": "\u30ed\u30fc\u30ab\u30eb\u30e2\u30c7\u30eb\u3092\u512a\u5148\u3057\u3066\u4f7f\u7528\u3059\u308b"
         },
         "waza.localModelUrl": {
           "type": "string",
           "default": "http://localhost:11434",
-          "description": "ローカルモデルサーバーの URL"
+          "description": "\u30ed\u30fc\u30ab\u30eb\u30e2\u30c7\u30eb\u30b5\u30fc\u30d0\u30fc\u306e URL"
         },
         "waza.cloudModel": {
           "type": "string",
           "default": "claude-sonnet-4-5",
-          "description": "クラウドフォールバック時に使用するモデル"
+          "description": "\u30af\u30e9\u30a6\u30c9\u30d5\u30a9\u30fc\u30eb\u30d0\u30c3\u30af\u6642\u306b\u4f7f\u7528\u3059\u308b\u30e2\u30c7\u30eb"
         }
       }
     }
