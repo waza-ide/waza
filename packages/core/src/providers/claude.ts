@@ -17,7 +17,7 @@ export class ClaudeProvider extends BaseProvider {
   constructor(config: ProviderConfig) {
     super(config);
     if (!config.apiKey) {
-      throw new Error("Claude プロバイダーには apiKey が必要です");
+      throw new Error("Claude provider requires an API key.");
     }
     this.client = new Anthropic({ apiKey: config.apiKey });
   }

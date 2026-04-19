@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { ModelRouter } from '@waza/core';
 import { useTheme } from './context/ThemeContext.js';
+import { useSettings } from './context/SettingsContext.js';
 import { TitleBar } from './components/layout/TitleBar.js';
 import { Sidebar } from './components/layout/Sidebar.js';
 import type { ThreadGroup } from './components/layout/Sidebar.js';
@@ -26,6 +27,7 @@ const router = new ModelRouter();
 
 export function App(): JSX.Element {
   const { tokens } = useTheme();
+  const { settings } = useSettings();
 
   const [rootDir, setRootDir] = useState<string | null>(null);
   const [agentLog, setAgentLog] = useState<LogEntry[]>([]);
@@ -53,7 +55,7 @@ export function App(): JSX.Element {
     }
   }, []);
 
-  const handleSubmit = useCallback(async (input: string, _modelId: ModelId): Promise<void> => {
+  const handleSubmit = useCallback(async (input: string, modelId: ModelId): Promise<void> => {
     setThreadName(input.length > 40 ? input.slice(0, 40) + '…' : input);
     setAgentLog(prev => [...prev, { role: 'user', content: input }]);
     setCurrentState({ status: 'thinking', step: 0, message: 'Thinking…' });
@@ -76,8 +78,18 @@ export function App(): JSX.Element {
         setCurrentState({ status: 'idle' });
       }
     });
-    await loop.run(input);
-  }, []);
+    // Pass modelId and current settings to the loop
+    await loop.run(input, modelId, {
+      cocoroBaseUrl:   settings.cocoroBaseUrl,
+      cocoroApiKey:    settings.cocoroApiKey,
+      cocoroModel:     settings.cocoroModel,
+      ollamaBaseUrl:   settings.ollamaBaseUrl,
+      ollamaModel:     settings.ollamaModel,
+      anthropicApiKey: settings.anthropicApiKey,
+      geminiApiKey:    settings.geminiApiKey,
+      maxSteps:        settings.maxSteps,
+    });
+  }, [settings]);
 
   const handleStop = useCallback((): void => {
     agentLoopRef.current.stop();
@@ -213,7 +225,7 @@ export function App(): JSX.Element {
               <Composer
                 currentFile={activeTab?.path ?? null}
                 running={isRunning}
-                onSubmit={input => { void handleSubmit(input, 'auto'); }}
+                onSubmit={(input, modelId) => { void handleSubmit(input, modelId); }}
                 onStop={handleStop}
               />
             </div>
