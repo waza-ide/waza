@@ -7,6 +7,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTheme } from '../../context/ThemeContext.js';
 import { useSettings } from '../../context/SettingsContext.js';
+import { SkillsPanel } from './SkillsPanel.js';
+import { TelemetryPanel } from './TelemetryPanel.js';
 import type { WazaSettings, AppTheme, DefaultModel } from '../../context/SettingsContext.js';
 
 interface SettingsPanelProps {
@@ -205,13 +207,15 @@ function NumberInput({ value, onChange, min, max }: {
 // Sections
 // ─────────────────────────────────────────────
 
-type Section = 'appearance' | 'models' | 'agent' | 'editor' | 'about';
+type Section = 'appearance' | 'models' | 'agent' | 'editor' | 'skills' | 'telemetry' | 'about';
 
 const SECTIONS: { id: Section; label: string; icon: string }[] = [
   { id: 'appearance', label: 'Appearance',    icon: '◑' },
   { id: 'models',     label: 'Models & APIs', icon: '◎' },
   { id: 'agent',      label: 'Agent',         icon: '▶' },
   { id: 'editor',     label: 'Editor',        icon: '≡' },
+  { id: 'skills',     label: 'Skills',        icon: '✦' },
+  { id: 'telemetry',  label: 'Telemetry',     icon: '◉' },
   { id: 'about',      label: 'About',         icon: 'ℹ' },
 ];
 
@@ -605,7 +609,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps): JSX.Elemen
                     color: tokens.color.text.tertiary,
                     marginTop: 2,
                   }}>
-                    Version 0.5.2 · mdl-systems
+                    Version 0.9.0 · mdl-systems
                   </div>
                 </div>
               </div>
@@ -661,6 +665,22 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps): JSX.Elemen
                 Reset all settings to defaults
               </button>
             </div>
+          </div>
+        );
+
+      case 'skills':
+        return (
+          <div>
+            {sectionTitle('Skills')}
+            <SkillsPanel />
+          </div>
+        );
+
+      case 'telemetry':
+        return (
+          <div>
+            {sectionTitle('Provider Telemetry')}
+            <TelemetryPanel />
           </div>
         );
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ModelRouter } from '@waza/core';
 import { useTheme } from './context/ThemeContext.js';
 import { useSettings } from './context/SettingsContext.js';
@@ -10,6 +10,7 @@ import { TabBar } from './components/TabBar.js';
 import { Editor } from './components/Editor.js';
 import { WelcomeScreen } from './components/WelcomeScreen.js';
 import { AgentPanel } from './components/AgentPanel.js';
+import { AgentPanelV2 } from './components/AgentPanelV2.js';
 import { Composer } from './components/Composer.js';
 import type { ModelId } from './components/Composer.js';
 import { MultiFileDiffView } from './components/MultiFileDiffView.js';
@@ -17,6 +18,10 @@ import { useEditorTabs } from './hooks/useEditorTabs.js';
 import { DesktopAgentLoop } from './agent/loop.js';
 import type { AgentState } from './agent/types.js';
 import type { MultiFileEdit } from './types/editor.js';
+import { useTaskStore } from './stores/taskStore.js';
+import type { Task } from '@waza/core';
+import { ReviewModal } from './components/review/ReviewModal.js';
+import type { ReviewRequest, GatewayDecision } from '@waza/core';
 
 interface LogEntry {
   role: 'user' | 'assistant' | 'system';
@@ -28,11 +33,14 @@ const router = new ModelRouter();
 export function App(): JSX.Element {
   const { tokens } = useTheme();
   const { settings } = useSettings();
+  const { createTask, setActive: setActiveTask, activeTaskId } = useTaskStore();
 
   const [rootDir, setRootDir] = useState<string | null>(null);
   const [agentLog, setAgentLog] = useState<LogEntry[]>([]);
   const [currentState, setCurrentState] = useState<AgentState>({ status: 'idle' });
   const [pendingEdit, setPendingEdit] = useState<MultiFileEdit | null>(null);
+  const [reviewRequest, setReviewRequest] = useState<ReviewRequest | null>(null);
+  const [resolveReview, setResolveReview] = useState<((d: GatewayDecision) => void) | null>(null);
   const [threadName, setThreadName] = useState<string | null>(null);
   const [showAgentPanel, setShowAgentPanel] = useState(false);
 
@@ -41,6 +49,22 @@ export function App(): JSX.Element {
   const [activeThreadId] = useState<string | null>(null);
 
   const agentLoopRef = useRef<DesktopAgentLoop>(new DesktopAgentLoop(router, ''));
+
+  // Wire ReviewGateway handler once on mount
+  useEffect(() => {
+    agentLoopRef.current.setReviewHandler(
+      (req: ReviewRequest): Promise<GatewayDecision> =>
+        new Promise(resolve => {
+          setReviewRequest(req);
+          setResolveReview(() => (d: GatewayDecision) => {
+            setReviewRequest(null);
+            setResolveReview(null);
+            resolve(d);
+          });
+        })
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     tabs, activeTab, activeTabId,
@@ -292,12 +316,18 @@ export function App(): JSX.Element {
                 </button>
               </div>
 
-              {/* Agent log */}
-              <AgentPanel log={agentLog} currentState={currentState} />
+              {/* Agent panel — Codex-mode taskStore view */}
+              <AgentPanelV2 />
             </div>
           )}
         </div>
       </div>
     </div>
+    {reviewRequest && resolveReview && (
+      <ReviewModal
+        request={reviewRequest}
+        onDecision={resolveReview}
+      />
+    )}
   );
 }
