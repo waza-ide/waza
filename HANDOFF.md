@@ -2,13 +2,43 @@
 
 ## 最終更新
 - 日時: 2026-04-19
-- 担当エージェント: Antigravity (Phase 7: Electron MVP 完了)
+- 担当エージェント: Antigravity (Phase 8: v0.2.0 リリース)
 
 ## 完了タスク
 - [Phase 1] モノレポ初期構造（CLAUDE.md / AGENTS.md / STRUCTURE.md / pnpm workspace）
 - [Phase 1] .claude/ ハーネス / 4パッケージ骨格 / CI / CodeRabbit / LICENSE
 - [Phase 3] ModelRouter / AgentLoop / WazaPanel / テスト 7/7 pass
 - [genshijin] .claude/skills/genshijin/SKILL.md 導入
+- [Phase 5] VSIX生成・README・CHANGELOG・release.yml・v0.1.0タグ push
+- [Phase 6] cocoro-bridge: zodバリデーション / APIキー認証 / リトライ / detectLocalModels
+- [Phase 6] ui: DiffViewWithContent（diffLines / 折りたたみ / y/n キーボードショートカット）
+- [Phase 6] core: GeminiProvider 実装 / ModelRouter に gemini フォールバック追加
+- [Phase 6] ProviderKind / ModelConfig に "gemini" 追加（FROZEN types.ts に追記）
+- [Phase 6] 全テスト: cocoro-bridge 10/10 / ui 5/5 / core 4/4 / extension 7/7 pass
+- [Phase 6] commit: ad5e2f4
+- [Phase 7] packages/desktop/ 新規作成（Electron v29 + Monaco + React）
+  - src/main/index.ts — IPC handlers（readFile/writeFile/readDir/openFolder）
+  - src/preload/index.ts — contextBridge（window.wazaAPI）
+  - src/renderer/App.tsx — 3ペインレイアウト（FileTree/Editor/WazaSidebar）
+  - src/renderer/components/FileTree.tsx — 再帰展開ファイルツリー
+  - src/renderer/components/Editor.tsx — Monaco + Ctrl+S保存
+  - src/renderer/components/WazaSidebar.tsx — ModelRouter連携チャットUI
+  - tsconfig.main/renderer / vite.config.ts / electron-builder.yml / AGENTS.md
+  - build:main ✅ / build:renderer ✅（253KB bundle）
+- [Phase 7] .deb パッケージ生成 ✅ — `waza_0.1.0_amd64.deb` (80MB)
+  - executableName: waza 修正（@wazadesktop → waza）
+  - commit: 7e9d536
+- [Phase 8] v0.2.0 リリース ✅
+  - FileTree再帰展開（TreeNodeベース遅延ロード / IGNORE / ソート / カラー / 選択ハイライト）
+  - DesktopAgentLoop移植（src/renderer/agent/loop.ts + types.ts）
+    - VSCode依存完全除去（vscode.window.* / vscode.Disposable → コールバック/IPC）
+    - parseModelResponse: TOOL: / DONE: / text パース（export済みテスト可能）
+    - dispatchTool: read_file / write_file / exec_command
+  - IPC agent:exec 追加（mainプロセスでexecSync実行, timeout=30s）
+  - WazaSidebar: DesktopAgentLoop差し替え + 停止ボタン + 状態表示
+  - vitest追加: desktop 13/13 / 全パッケージ 34/34 pass
+  - waza_0.2.0_amd64.deb 生成確認 (80MB)
+  - commit: 34b565d / tag: v0.2.0 push済み
 - [Phase 5] VSIX生成・README・CHANGELOG・release.yml・v0.1.0タグ push
 - [Phase 6] cocoro-bridge: zodバリデーション / APIキー認証 / リトライ / detectLocalModels
 - [Phase 6] ui: DiffViewWithContent（diffLines / 折りたたみ / y/n キーボードショートカット）
