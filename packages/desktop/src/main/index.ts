@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import { setupAutoUpdater } from './updater.js';
@@ -6,13 +6,17 @@ import { setupAutoUpdater } from './updater.js';
 const isDev = process.env['NODE_ENV'] === 'development';
 
 function createWindow(): BrowserWindow {
+  // Hide the native menu bar (File/Edit/View etc)
+  Menu.setApplicationMenu(null);
+
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    backgroundColor: '#0d1117',
-    titleBarStyle: 'hiddenInset',
+    backgroundColor: '#ffffff',
+    titleBarStyle: 'hidden',      // hides native title bar entirely
+    trafficLightPosition: { x: 12, y: 10 },  // macOS traffic lights position
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,

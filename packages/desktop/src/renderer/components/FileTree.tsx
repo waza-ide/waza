@@ -133,7 +133,7 @@ function FileTreeNodeView({ node, onToggle, onSelectFile, selectedPath }: FileTr
               color: tokens.color.text.tertiary,
               lineHeight: '22px',
             }}>
-              (空)
+              (empty)
             </div>
           )}
         </>
@@ -219,7 +219,7 @@ export function FileTree({
           fontWeight: tokens.font.weight.semibold,
           fontSize: tokens.font.size.md,
         }}>
-          技 Waza
+          Waza
         </div>
         <button
           id="open-folder-btn"
@@ -236,7 +236,10 @@ export function FileTree({
             textAlign: 'left',
           }}
         >
-          📂 フォルダを開く
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
+            <path d="M1 4a1 1 0 0 1 1-1h4l2 2h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4z"/>
+          </svg>
+          Open Folder
         </button>
       </div>
     );
@@ -268,9 +271,11 @@ export function FileTree({
         <span
           onClick={onOpenFolder}
           style={{ cursor: 'pointer', opacity: 0.5, flexShrink: 0, fontSize: 13 }}
-          title="フォルダを変更"
+          title="Change folder"
         >
-          📂
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, flexShrink: 0 }}>
+            <path d="M1 4a1 1 0 0 1 1-1h4l2 2h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4z"/>
+          </svg>
         </span>
       </div>
 
@@ -282,7 +287,7 @@ export function FileTree({
             color: tokens.color.text.tertiary,
             fontSize: tokens.font.size.sm,
           }}>
-            読み込み中...
+            Loading...
           </div>
         )}
         {!loading && nodes.map(node => (

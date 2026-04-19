@@ -57,7 +57,7 @@ export function App(): JSX.Element {
     // スレッド名設定（最初の40文字）
     setThreadName(input.length > 40 ? input.slice(0, 40) + '...' : input);
     setAgentLog(prev => [...prev, { role: 'user', content: input }]);
-    setCurrentState({ status: 'thinking', step: 0, message: '考え中...' });
+    setCurrentState({ status: 'thinking', step: 0, message: 'Thinking...' });
     setShowAgentPanel(true);
 
     const loop = agentLoopRef.current;
@@ -72,7 +72,7 @@ export function App(): JSX.Element {
         unsubscribe();
         setCurrentState({ status: 'idle' });
       } else if (state.status === 'stopped') {
-        setAgentLog(prev => [...prev, { role: 'system', content: '停止しました' }]);
+        setAgentLog(prev => [...prev, { role: 'system', content: 'Stopped' }]);
         unsubscribe();
         setCurrentState({ status: 'idle' });
       }

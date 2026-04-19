@@ -5,6 +5,25 @@ interface WelcomeScreenProps {
   onOpenFolder: () => Promise<void>;
 }
 
+// Simple folder SVG icon
+function FolderIcon(): JSX.Element {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0, opacity: 0.55 }}
+    >
+      <path d="M1 4a1 1 0 0 1 1-1h4l2 2h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4z" />
+    </svg>
+  );
+}
+
 export function WelcomeScreen({ projectName, onOpenFolder }: WelcomeScreenProps): JSX.Element {
   const { tokens } = useTheme();
 
@@ -19,21 +38,21 @@ export function WelcomeScreen({ projectName, onOpenFolder }: WelcomeScreenProps)
       background: tokens.color.bg.base,
       animation: 'fadeIn 200ms ease',
     }}>
-      {/* 技ロゴ */}
+      {/* Waza logo mark */}
       <div style={{
-        width: 56,
-        height: 56,
-        borderRadius: tokens.radius.xl,
+        width: 48,
+        height: 48,
+        borderRadius: tokens.radius.lg,
         border: `1.5px solid ${tokens.color.bg.border}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 22,
-        color: tokens.color.text.secondary,
-        fontWeight: tokens.font.weight.medium,
         background: tokens.color.bg.sidebar,
       }}>
-        技
+        {/* W monogram */}
+        <svg width="22" height="18" viewBox="0 0 22 18" fill="none" stroke={tokens.color.text.tertiary} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="1,2 5,16 11,6 17,16 21,2" />
+        </svg>
       </div>
 
       <span style={{
@@ -45,7 +64,7 @@ export function WelcomeScreen({ projectName, onOpenFolder }: WelcomeScreenProps)
         Let&apos;s build
       </span>
 
-      {/* フォルダ選択ボタン */}
+      {/* Folder selector button */}
       <button
         id="open-folder-btn"
         onClick={() => { void onOpenFolder(); }}
@@ -63,16 +82,14 @@ export function WelcomeScreen({ projectName, onOpenFolder }: WelcomeScreenProps)
           transition: `border-color ${tokens.transition.fast}, background ${tokens.transition.fast}`,
         }}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = tokens.color.bg.border;
           (e.currentTarget as HTMLButtonElement).style.background = tokens.color.bg.hover;
         }}
         onMouseLeave={e => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = tokens.color.bg.border;
           (e.currentTarget as HTMLButtonElement).style.background = tokens.color.bg.sidebar;
         }}
       >
-        <span style={{ fontSize: 11, opacity: 0.5 }}>▣</span>
-        <span>{projectName ?? 'フォルダを選択'}</span>
+        <FolderIcon />
+        <span>{projectName ?? 'Open folder'}</span>
         {projectName && (
           <span style={{ opacity: 0.35, fontSize: 10 }}>▾</span>
         )}

@@ -31,7 +31,7 @@ export function ActivityBar({ activeTab, onTabChange }: ActivityBarProps): JSX.E
     },
     {
       id: 'agent',
-      label: 'エージェント履歴',
+      label: 'Agent History',
       enabled: true,
       position: 'top',
       icon: (

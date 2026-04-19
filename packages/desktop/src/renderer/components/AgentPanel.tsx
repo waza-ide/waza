@@ -46,8 +46,8 @@ export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element 
         fontSize: tokens.font.size.sm,
         padding: tokens.space.xl,
       }}>
-        <span style={{ fontSize: 28, opacity: 0.15 }}>技</span>
-        <span>Wazaに指示してください</span>
+        
+        <span>Start a conversation below</span>
       </div>
     );
   }
@@ -68,7 +68,7 @@ export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element 
             color: tokens.color.text.tertiary,
             fontWeight: tokens.font.weight.medium,
           }}>
-            {entry.role === 'user' ? 'あなた' : entry.role === 'system' ? 'System' : '技 Waza'}
+            {entry.role === 'user' ? 'You' : entry.role === 'system' ? 'System' : 'Waza'}
           </div>
           <div style={{
             fontSize: tokens.font.size.sm,
@@ -96,7 +96,7 @@ export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element 
           }}>
             <span>{STATE_ICON[currentState.status]}</span>
             <span>
-              {currentState.status === 'thinking' ? currentState.message : `実行: ${currentState.action}`}
+              {currentState.status === 'thinking' ? currentState.message : `Running: ${currentState.action}`}
             </span>
           </div>
           <div style={{ display: 'flex', gap: tokens.space.xs, paddingLeft: 2 }}>
@@ -130,8 +130,8 @@ export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element 
           <span>{STATE_ICON[currentState.status]}</span>
           <span>
             {currentState.status === 'error'
-              ? `エラー: ${'message' in currentState ? currentState.message : ''}`
-              : '停止しました'}
+              ? `Error: ${'message' in currentState ? currentState.message : ''}`
+              : 'Stopped'}
           </span>
         </div>
       )}

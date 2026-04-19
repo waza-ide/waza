@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTheme } from '../context/ThemeContext.js';
 
 export const AVAILABLE_MODELS = [
-  { id: 'auto',              label: 'auto',             desc: 'ローカル優先自動選択' },
+  { id: 'auto',              label: 'auto',             desc: 'Local-first auto select' },
   { id: 'cocoro',            label: 'cocoro-OS',        desc: 'Local' },
   { id: 'ollama/llama3.2',   label: 'Llama 3.2',        desc: 'Ollama · Local' },
   { id: 'claude-sonnet-4-6', label: 'Claude Sonnet',    desc: 'Anthropic · Cloud' },
@@ -30,11 +30,12 @@ export function Composer({
   const [modelId, setModelId] = useState<ModelId>('auto');
   const [showModelPicker, setShowModelPicker] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const selectedModel = AVAILABLE_MODELS.find(m => m.id === modelId) ?? AVAILABLE_MODELS[0];
 
-  // ピッカー外クリックで閉じる
+  // Close picker when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent): void {
       if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
@@ -52,13 +53,29 @@ export function Composer({
     textareaRef.current?.focus();
   }, [input, running, onSubmit, modelId]);
 
+  // Calculate dropdown position — always open ABOVE the button
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  useEffect(() => {
+    if (!showModelPicker || !btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const dropdownH = AVAILABLE_MODELS.length * 52 + 8; // approx height
+    setDropdownStyle({
+      position: 'fixed',
+      bottom: window.innerHeight - rect.top + 6,
+      left: rect.left,
+      width: Math.max(210, rect.width),
+      zIndex: 1000,
+    });
+    void dropdownH; // suppress unused
+  }, [showModelPicker]);
+
   return (
     <div style={{
       padding: `${tokens.space.md}px ${tokens.space.xl}px`,
       background: tokens.color.bg.base,
       flexShrink: 0,
     }}>
-      {/* コンテキスト表示 */}
+      {/* Context file indicator */}
       {currentFile && (
         <div style={{
           marginBottom: tokens.space.sm,
@@ -71,7 +88,7 @@ export function Composer({
         </div>
       )}
 
-      {/* 入力ボックス全体 */}
+      {/* Input box */}
       <div style={{
         border: `1px solid ${tokens.color.bg.border}`,
         borderRadius: tokens.radius.xl,
@@ -88,10 +105,8 @@ export function Composer({
             tokens.color.bg.border;
         }}
       >
-        {/* テキストエリア */}
-        <div style={{
-          padding: `${tokens.space.md}px ${tokens.space.lg}px ${tokens.space.sm}px`,
-        }}>
+        {/* Textarea */}
+        <div style={{ padding: `${tokens.space.md}px ${tokens.space.lg}px ${tokens.space.sm}px` }}>
           <textarea
             id="waza-input"
             ref={textareaRef}
@@ -103,7 +118,7 @@ export function Composer({
                 handleSubmit();
               }
             }}
-            placeholder={running ? '実行中...' : 'Wazaに指示する...'}
+            placeholder={running ? 'Running...' : 'Ask Waza...'}
             rows={2}
             disabled={running}
             style={{
@@ -121,7 +136,7 @@ export function Composer({
           />
         </div>
 
-        {/* フッター */}
+        {/* Footer row */}
         <div style={{
           padding: `${tokens.space.sm}px ${tokens.space.lg}px`,
           display: 'flex',
@@ -129,17 +144,16 @@ export function Composer({
           justifyContent: 'space-between',
           borderTop: `1px solid ${tokens.color.bg.borderSub}`,
         }}>
-          {/* 左: + ボタン + モデル選択 */}
+          {/* Left: + button + model selector */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: tokens.space.sm,
-            position: 'relative',
           }}>
-            {/* + ボタン（将来: ファイル添付） */}
+            {/* Attach button (future) */}
             <button
               id="composer-attach-btn"
-              title="ファイルを添付（未実装）"
+              title="Attach file (coming soon)"
               disabled
               style={{
                 width: 24,
@@ -151,16 +165,17 @@ export function Composer({
                 justifyContent: 'center',
                 color: tokens.color.text.tertiary,
                 fontSize: 15,
-                opacity: 0.5,
+                opacity: 0.45,
               }}
             >
               +
             </button>
 
-            {/* モデル選択ドロップダウン */}
+            {/* Model picker */}
             <div ref={pickerRef} style={{ position: 'relative' }}>
               <button
                 id="model-select-btn"
+                ref={btnRef}
                 onClick={() => setShowModelPicker(prev => !prev)}
                 style={{
                   display: 'flex',
@@ -171,41 +186,34 @@ export function Composer({
                   border: `1px solid ${tokens.color.bg.border}`,
                   fontSize: tokens.font.size.xs,
                   color: tokens.color.text.secondary,
-                  background: showModelPicker
-                    ? tokens.color.bg.active
-                    : 'transparent',
+                  background: showModelPicker ? tokens.color.bg.active : 'transparent',
                   cursor: 'pointer',
                   transition: `background ${tokens.transition.fast}`,
                 }}
                 onMouseEnter={e => {
                   if (!showModelPicker)
-                    (e.currentTarget as HTMLButtonElement).style.background =
-                      tokens.color.bg.hover;
+                    (e.currentTarget as HTMLButtonElement).style.background = tokens.color.bg.hover;
                 }}
                 onMouseLeave={e => {
                   if (!showModelPicker)
-                    (e.currentTarget as HTMLButtonElement).style.background =
-                      'transparent';
+                    (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
                 }}
               >
                 <span>{selectedModel.label}</span>
                 <span style={{ opacity: 0.45, fontSize: 8 }}>▾</span>
               </button>
 
-              {/* ドロップダウンパネル */}
+              {/* Dropdown panel — position:fixed so it's never clipped */}
               {showModelPicker && (
                 <div style={{
-                  position: 'absolute',
-                  bottom: 'calc(100% + 6px)',
-                  left: 0,
+                  ...dropdownStyle,
                   background: tokens.color.bg.elevated,
                   border: `1px solid ${tokens.color.bg.border}`,
                   borderRadius: tokens.radius.lg,
                   overflow: 'hidden',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                  minWidth: 210,
-                  zIndex: 200,
-                  animation: 'slideDown 80ms ease',
+                  boxShadow: '0 -4px 24px rgba(0,0,0,0.12)',
+                  minWidth: 220,
+                  animation: 'fadeIn 80ms ease',
                 }}>
                   {AVAILABLE_MODELS.map(model => (
                     <button
@@ -221,7 +229,7 @@ export function Composer({
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'flex-start',
-                        gap: 2,
+                        gap: 1,
                         background: model.id === modelId
                           ? tokens.color.bg.active
                           : 'transparent',
@@ -236,9 +244,7 @@ export function Composer({
                       }}
                       onMouseLeave={e => {
                         (e.currentTarget as HTMLButtonElement).style.background =
-                          model.id === modelId
-                          ? tokens.color.bg.active
-                          : 'transparent';
+                          model.id === modelId ? tokens.color.bg.active : 'transparent';
                       }}
                     >
                       <span style={{
@@ -250,10 +256,7 @@ export function Composer({
                       }}>
                         {model.label}
                       </span>
-                      <span style={{
-                        fontSize: tokens.font.size.xs,
-                        color: tokens.color.text.tertiary,
-                      }}>
+                      <span style={{ fontSize: tokens.font.size.xs, color: tokens.color.text.tertiary }}>
                         {model.desc}
                       </span>
                     </button>
@@ -263,12 +266,12 @@ export function Composer({
             </div>
           </div>
 
-          {/* 右: 送信 / 停止ボタン */}
+          {/* Right: Stop / Send */}
           {running ? (
             <button
               id="stop-agent-btn"
               onClick={onStop}
-              title="停止"
+              title="Stop"
               style={{
                 width: 28,
                 height: 28,
@@ -303,7 +306,7 @@ export function Composer({
               id="send-btn"
               onClick={handleSubmit}
               disabled={!input.trim()}
-              title="送信 (Enter)"
+              title="Send (Enter)"
               style={{
                 width: 28,
                 height: 28,

@@ -76,14 +76,14 @@ export function MultiFileDiffView({
         <span style={{ fontSize: tokens.font.size.sm, color: tokens.color.text.secondary, flex: 1, minWidth: 0 }}>
           {edit.description}
           <span style={{ marginLeft: 8, color: tokens.color.accent.blue }}>
-            {edit.files.length}ファイル
+            {edit.files.length}files
           </span>
         </span>
-        <button id="accept-all-btn" onClick={onAcceptAll} style={acceptStyle}>すべて承認</button>
-        <button id="reject-all-btn" onClick={onRejectAll} style={rejectStyle}>すべて却下</button>
+        <button id="accept-all-btn" onClick={onAcceptAll} style={acceptStyle}>Accept all</button>
+        <button id="reject-all-btn" onClick={onRejectAll} style={rejectStyle}>Reject all</button>
       </div>
 
-      {/* ファイルごとのdiff */}
+      {/* filesごとのdiff */}
       {edit.files.map(file => {
         const changes = diffLines(file.originalContent, file.newContent);
         const isExpanded = expanded.has(file.path);
@@ -130,14 +130,14 @@ export function MultiFileDiffView({
                 onClick={e => { e.stopPropagation(); onAcceptFile(file.path); }}
                 style={acceptStyle}
               >
-                承認
+                Accept
               </button>
               <button
                 id={`reject-file-${filename}`}
                 onClick={e => { e.stopPropagation(); onRejectFile(file.path); }}
                 style={rejectStyle}
               >
-                却下
+                Reject
               </button>
             </div>
 

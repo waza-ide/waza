@@ -55,8 +55,8 @@ export function Editor({ tab, onChange, onSave }: EditorProps): JSX.Element {
         gap: tokens.space.md,
         background: tokens.color.bg.base,
       }}>
-        <span style={{ fontSize: 48, opacity: 0.08 }}>技</span>
-        <span style={{ fontSize: tokens.font.size.base }}>ファイルを選択してください</span>
+        
+        <span style={{ fontSize: tokens.font.size.base }}>Select a file to edit</span>
         <span style={{ fontSize: tokens.font.size.sm, opacity: 0.5 }}>
           ← ツリーからファイルをクリック
         </span>
@@ -80,7 +80,7 @@ export function Editor({ tab, onChange, onSave }: EditorProps): JSX.Element {
           borderRadius: tokens.radius.sm,
           border: `1px solid ${tokens.color.bg.border}`,
         }}>
-          {saving ? '保存中...' : '✓ 保存完了'}
+          {saving ? 'Saving...' : '✓ Saved'}
         </div>
       )}
 

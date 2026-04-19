@@ -20,13 +20,13 @@ export function AgentHistory({ entries = [] }: AgentHistoryProps): JSX.Element {
         alignItems: 'center',
         gap: tokens.space.md,
       }}>
-        <span style={{ fontSize: 28, opacity: 0.15 }}>技</span>
+        
         <span style={{
           fontSize: tokens.font.size.sm,
           color: tokens.color.text.tertiary,
           textAlign: 'center',
         }}>
-          履歴はまだありません
+          No history yet
         </span>
       </div>
     );
@@ -48,7 +48,7 @@ export function AgentHistory({ entries = [] }: AgentHistoryProps): JSX.Element {
             color: tokens.color.text.tertiary,
             marginBottom: tokens.space.xs,
           }}>
-            {entry.role === 'user' ? 'あなた' : 'Waza'} · {
+            {entry.role === 'user' ? 'You' : 'Waza'} · {
               entry.timestamp.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
             }
           </div>
