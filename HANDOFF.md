@@ -2,87 +2,56 @@
 
 ## 最終更新
 - 日時: 2026-04-19
-- 担当エージェント: Antigravity (Phase 11: v0.5.0 ライト/ダークテーマ)
+- 担当エージェント: Antigravity (Codex Mode Phase 1: v0.6.0)
 
 ## 完了タスク
-- [Phase 1] モノレポ初期構造（CLAUDE.md / AGENTS.md / STRUCTURE.md / pnpm workspace）
-- [Phase 1] .claude/ ハーネス / 4パッケージ骨格 / CI / CodeRabbit / LICENSE
-- [Phase 3] ModelRouter / AgentLoop / WazaPanel / テスト 7/7 pass
-- [genshijin] .claude/skills/genshijin/SKILL.md 導入
-- [Phase 5] VSIX生成・README・CHANGELOG・release.yml・v0.1.0タグ push
-- [Phase 6] cocoro-bridge: zodバリデーション / APIキー認証 / リトライ / detectLocalModels
-- [Phase 6] ui: DiffViewWithContent（diffLines / 折りたたみ / y/n キーボードショートカット）
-- [Phase 6] core: GeminiProvider 実装 / ModelRouter に gemini フォールバック追加
-- [Phase 6] ProviderKind / ModelConfig に "gemini" 追加（FROZEN types.ts に追記）
-- [Phase 6] 全テスト: cocoro-bridge 10/10 / ui 5/5 / core 4/4 / extension 7/7 pass
-- [Phase 6] commit: ad5e2f4
-- [Phase 7] packages/desktop/ 新規作成（Electron v29 + Monaco + React）
-  - src/main/index.ts — IPC handlers（readFile/writeFile/readDir/openFolder）
-  - src/preload/index.ts — contextBridge（window.wazaAPI）
-  - src/renderer/App.tsx — 3ペインレイアウト（FileTree/Editor/WazaSidebar）
-  - src/renderer/components/FileTree.tsx — 再帰展開ファイルツリー
-  - src/renderer/components/Editor.tsx — Monaco + Ctrl+S保存
-  - src/renderer/components/WazaSidebar.tsx — ModelRouter連携チャットUI
-  - tsconfig.main/renderer / vite.config.ts / electron-builder.yml / AGENTS.md
-  - build:main ✅ / build:renderer ✅（253KB bundle）
-- [Phase 7] .deb パッケージ生成 ✅ — `waza_0.1.0_amd64.deb` (80MB)
-  - executableName: waza 修正（@wazadesktop → waza）
-  - commit: 7e9d536
-- [Phase 8] v0.2.0 リリース ✅
-  - FileTree再帰展開（TreeNodeベース遅延ロード / IGNORE / ソート / カラー / 選択ハイライト）
-  - DesktopAgentLoop移植（src/renderer/agent/loop.ts + types.ts）
-    - VSCode依存完全除去（vscode.window.* / vscode.Disposable → コールバック/IPC）
-    - parseModelResponse: TOOL: / DONE: / text パース（export済みテスト可能）
-    - dispatchTool: read_file / write_file / exec_command
-  - IPC agent:exec 追加（mainプロセスでexecSync実行, timeout=30s）
-  - WazaSidebar: DesktopAgentLoop差し替え + 停止ボタン + 状態表示
-  - vitest追加: desktop 13/13 / 全パッケージ 34/34 pass
-  - waza_0.2.0_amd64.deb 生成確認 (80MB)
-  - commit: 34b565d / tag: v0.2.0 push済み
-- [Phase 5] VSIX生成・README・CHANGELOG・release.yml・v0.1.0タグ push
-- [Phase 6] cocoro-bridge: zodバリデーション / APIキー認証 / リトライ / detectLocalModels
-- [Phase 6] ui: DiffViewWithContent（diffLines / 折りたたみ / y/n キーボードショートカット）
-- [Phase 6] core: GeminiProvider 実装 / ModelRouter に gemini フォールバック追加
-- [Phase 6] ProviderKind / ModelConfig に "gemini" 追加（FROZEN types.ts に追記）
-- [Phase 6] 全テスト: cocoro-bridge 10/10 / ui 5/5 / core 4/4 / extension 7/7 pass
-- [Phase 6] commit: ad5e2f4
-- [Phase 7] packages/desktop/ 新規作成（Electron v29 + Monaco + React）
-  - src/main/index.ts — IPC handlers（readFile/writeFile/readDir/openFolder）
-  - src/preload/index.ts — contextBridge（window.wazaAPI）
-  - src/renderer/App.tsx — 3ペインレイアウト（FileTree/Editor/WazaSidebar）
-  - src/renderer/components/FileTree.tsx — 再帰展開ファイルツリー
-  - src/renderer/components/Editor.tsx — Monaco + Ctrl+S保存
-  - src/renderer/components/WazaSidebar.tsx — ModelRouter連携チャットUI
-  - tsconfig.main/renderer / vite.config.ts / electron-builder.yml / AGENTS.md
-  - build:main ✅ / build:renderer ✅（253KB bundle）
-- [Phase 7] .deb パッケージ生成 ✅ — `waza_0.1.0_amd64.deb` (80MB) / `waza_0.1.0_x86_64.AppImage` (120MB)
-  - electron-builder.yml: maintainer / artifactName 追記
-  - package.json: author / description / homepage 追記
-  - commit: f116f65
+- [Phase 1–11] v0.5.4 まで完了済み（旧 HANDOFF 参照）
+- **[Codex Phase 1] v0.6.0 ✅ — Task/Step データモデル + Zustand + 構造化ロガー**
+  - branch: `codex-mode/phase-1-foundation`
+  - commit: 9f0167f / tag: v0.6.0
+  - `packages/core/src/task/types.ts` — Task/Step/TaskAction/AgentPlan/LogEntry 型定義 + type guards
+  - `packages/core/src/logging/logger.ts` — Logger class / consoleSink / createCaptureSink
+  - `packages/core/src/index.ts` — 上記を @waza/core から export
+  - `packages/desktop/src/renderer/stores/taskStore.ts` — Zustand store
+    mutations: createTask / updateTaskStatus / appendStep / updateStepStatus / appendAction / appendLog / setActive / clearTasks
+  - `packages/desktop/src/renderer/agent/loop.ts` — Phase 1 リファクタ完了
+    run() ごとに Task→Step を生成し taskStore 経由で永続化
+    AgentState イベントは後方互換のためアダプタ継続
+  - テスト: core 24/24 (taskTypes:11, logger:9, gemini:4) / desktop 73/73 / total 119/119
 
-## 次のタスク（候補）
-- Phase 11 完了 ✅ — v0.5.0 リリース済み (commit: 9a2f5e7 / tag: v0.5.0)
-- [Phase 10] Codex風UIリデザイン:
-  - styles/tokens.ts (デザイントークン) / styles/global.css (グローバルリセット)
-  - layout/TitleBar.tsx (drag-region) / layout/ActivityBar.tsx / layout/Sidebar.tsx
-  - AgentHistory.tsx / AgentPanel.tsx / Composer.tsx
-  - Editor.tsx: tab/onChange(id)/onSave(id) インターフェース統一
-  - App.tsx: ActivityBar(48)+Sidebar(240)+MainArea(flex) / WazaSidebar廃止
-  - layout.test.ts: 19テスト追加 / 全体 64/64 pass
-  - waza_0.4.0_amd64.deb (81MB) 生成済み
-- Phase 11候補: ファイル検索（Cmd+P / インクリメンタルサーチ）
-- Phase 11候補: Search ActivityBar有効化（現在グレーアウト）
-- Phase 11候補: Agent経由マルチファイル編集プロポーザル → MultiFileDiffView表示
-- Phase 11候補: Marketplace正式公開（publisher登録 `waza-ide`・アイコン最適化）
-- Phase 11候補: モデル選択モーダル（Composerの◉ボタンから起動）
+## 次のタスク
 
+### Phase 2 — Review Gateway (v0.7.0) [最優先]
+
+実装対象ブランチ: `codex-mode/phase-2-gateway`
+
+1. `packages/core/src/gateway/triggers.ts` — requiresReview() / batchRequiresReview()
+2. `packages/core` に diff パッケージ追加 + `packages/core/src/gateway/diff.ts`
+3. Gateway 状態機械 (running → proposing → awaiting_review → {execute|aborted})
+4. `packages/desktop/src/renderer/components/review/ReviewModal.tsx` — 差分表示 + 承認/却下
+5. 却下時 → Step.status='aborted' → Auto-Fix Loop
+6. テスト: triggers.ts の全 actionType x 危険トークン組み合わせ 50 件以上
+
+Phase 2 完了まで write_file / delete_file はセキュリティリスク。
+ReviewModal なしで実行することは絶対に許容しない。
+
+### Phase 3 — 並列実行 & Scheduler (v0.8.0)
+- Electron Main process への TaskRunner 移設
+- IPC: task:create / task:control / task:subscribe
+- TaskQueue + 優先度スケジューラ + スターベーション防止 (60s)
+- TaskControl { pause, resume, cancel, retry }
+
+### Phase 4 — Automation / Skill / Telemetry (v0.9.0)
+- Skill エンティティ + System Prompt 注入
+- Automation トリガー (cron / file-watch / git-hook)
+- Model Telemetry (heartbeat 30s / latency / last-used)
 
 ## 未解決事項
-- packages/extension/src/router/index.ts — Phase 1 旧実装残存（未使用）
+- packages/extension/src/router/index.ts — 旧実装残存（未使用）
 - アイコン icon.png が384KB（Marketplace提出前に最適化必要）
-- FROZEN types.ts に "gemini" を追記済み（union拡張のため破壊なし）
+- AgentPanel.tsx は依然 AgentState ベース（Phase 3 で taskStore 直結予定）
 - @anthropic-ai/sdk の isAvailable() は models.list() を使用（API変更時に修正必要）
-- FileTree: ルートのエントリーのみ表示（サブディレクトリのクリック展開は状態管理のみで再帰fetchなし）
+- FileTree: サブディレクトリ再帰 fetch 未実装
 
 ## Electron 開発サーバー起動手順
 ```bash
@@ -103,3 +72,5 @@ NODE_ENV=development pnpm -F @waza/desktop electron
 - pnpm は `~/.local/share/pnpm/pnpm` にある（PATH要export）
 - `pnpm -r build` は desktop パッケージを含む（5パッケージ）
 - packages/desktop/release/ は .gitignore 対象（バイナリは大きすぎるため）
+- Review Gateway が実装されるまで write_file / delete_file はユーザー承認なしで実行される
+  → Phase 2 完了（v0.7.0）まで自律書き込みタスクは運用禁止
