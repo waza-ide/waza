@@ -2,7 +2,7 @@
 
 ## 最終更新
 - 日時: 2026-04-19
-- 担当エージェント: Antigravity (Phase 8: v0.2.0 リリース)
+- 担当エージェント: Antigravity (Phase 9: v0.3.0 リリース)
 
 ## 完了タスク
 - [Phase 1] モノレポ初期構造（CLAUDE.md / AGENTS.md / STRUCTURE.md / pnpm workspace）
@@ -61,14 +61,21 @@
   - commit: f116f65
 
 ## 次のタスク（候補）
-- `sudo dpkg -i packages/desktop/release/waza_0.1.0_amd64.deb && waza` — インストール・起動確認（要ターミナル）
-- Electron開発サーバー起動確認（詳細は下記手順参照）
-- FileTreeの再帰展開（現在はルートのみ、サブディレクトリ展開は未実装）
-- AgentLoop を extension の loop.ts から desktop に移植
-- 自動アップデート（electron-updater）
-- Marketplace正式公開（publisher登録 `waza-ide`・アイコン最適化 128px）
-- DiffViewWithContent を WazaPanel（extension）にも接続
-- v0.2.0計画: マルチファイル編集・コンテキスト管理・テスト自動生成
+- Phase 9 完了 ✅ — v0.3.0 リリース済み
+- [Phase 9] Task A — 自動アップデート:
+  - src/main/updater.ts / IPC updater:* 3本 / UpdaterBadge.tsx
+  - electron-builder.yml: GitHub publish設定 / autoupdate files 確認
+  - commit: d75a739 / tag: v0.3.0 push済み
+  - waza_0.3.0_amd64.deb (80MB) 生成確認
+- [Phase 9] Task B — マルチファイル編集:
+  - types/editor.ts (EditorTab/MultiFileEdit) / hooks/useEditorTabs.ts (tabsRefパターン)
+  - TabBar.tsx / MultiFileDiffView.tsx / UpdaterBadge.tsx
+  - Editor.tsx: onSave()→void / onChange コールバック追加
+  - App.tsx: タイトルバー + タブ管理 + MultiFileDiff統合
+  - tests: desktop 24/24 / 全パッケージ 50/50 pass
+- Phase 10候補: WazaSidebar からエージェント経由でMultiFileEdit提案を受け取る実装
+- Phase 10候補: ファイル検索（Cmd+P / ファイル名インクリメンタルサーチ）
+- Phase 10候補: Marketplace正式公開（publisher登録 `waza-ide`・アイコン最適化）
 
 ## 未解決事項
 - packages/extension/src/router/index.ts — Phase 1 旧実装残存（未使用）
