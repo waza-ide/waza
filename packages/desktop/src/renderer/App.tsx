@@ -9,6 +9,7 @@ import { StatusBar } from './components/layout/StatusBar.js';
 import { TabBar } from './components/TabBar.js';
 import { Editor } from './components/Editor.js';
 import { WelcomeScreen } from './components/WelcomeScreen.js';
+import { ConversationView } from './components/ConversationView.js';
 import { AgentPanelV2 } from './components/AgentPanelV2.js';
 import { Composer } from './components/Composer.js';
 import type { ModelId } from './components/Composer.js';
@@ -271,13 +272,18 @@ export function App(): JSX.Element {
             />
           )}
 
-          {/* Editor or Welcome */}
+          {/* Editor, Conversation, or Welcome */}
           <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
             {activeTab ? (
               <Editor
                 tab={activeTab}
                 onChange={updateContent}
                 onSave={saveTab}
+              />
+            ) : agentLog.length > 0 ? (
+              <ConversationView
+                agentLog={agentLog}
+                currentState={currentState}
               />
             ) : (
               <WelcomeScreen
