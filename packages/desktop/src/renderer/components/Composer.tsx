@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext.js';
 
 export const AVAILABLE_MODELS = [
   { id: 'auto',              label: 'auto',          desc: 'Local-first auto select',     dot: null },
-  { id: 'cocoro',            label: 'cocoro-OS',     desc: 'Qwen 2.5 72B AWQ · Local',   dot: '#22c55e' },
+  { id: 'cocoro',            label: 'Qwen 2.5-72B',  desc: 'MetaDataLab',                dot: '#22c55e' },
   { id: 'ollama/llama3.2',   label: 'Ollama',        desc: 'Local CPU/GPU',               dot: '#a78bfa' },
   { id: 'claude-sonnet-4-6', label: 'Claude Sonnet', desc: 'Anthropic · Cloud',           dot: '#f97316' },
   { id: 'claude-opus-4-6',   label: 'Claude Opus',   desc: 'Anthropic · Cloud',           dot: '#f97316' },
