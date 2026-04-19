@@ -19,6 +19,7 @@ linux:
     - AppImage
   category: Development
   icon: build/icon.png
+  executableName: waza
 
 deb:
   maintainer: "mdl-systems <dev@waza-ide.dev>"
