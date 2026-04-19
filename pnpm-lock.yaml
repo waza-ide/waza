@@ -61,12 +61,30 @@ importers:
       '@waza/ui':
         specifier: workspace:*
         version: link:../ui
+      builder-util-runtime:
+        specifier: ^9.5.1
+        version: 9.5.1
       electron-log:
         specifier: ^5.4.3
         version: 5.4.3
       electron-updater:
         specifier: ^6.8.3
         version: 6.8.3
+      fs-extra:
+        specifier: ^11.3.4
+        version: 11.3.4
+      js-yaml:
+        specifier: ^4.1.1
+        version: 4.1.1
+      lazy-val:
+        specifier: ^1.0.5
+        version: 1.0.5
+      lodash.escaperegexp:
+        specifier: ^4.1.2
+        version: 4.1.2
+      lodash.isequal:
+        specifier: ^4.5.0
+        version: 4.5.0
       monaco-editor:
         specifier: ^0.47.0
         version: 0.47.0
@@ -76,6 +94,12 @@ importers:
       react-dom:
         specifier: ^18.3.0
         version: 18.3.1(react@18.3.1)
+      semver:
+        specifier: ^7.7.4
+        version: 7.7.4
+      tiny-typed-emitter:
+        specifier: ^2.1.0
+        version: 2.1.0
     devDependencies:
       '@types/diff':
         specifier: ^8.0.0
@@ -1702,6 +1726,10 @@ packages:
   fs-extra@10.1.0:
     resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
     engines: {node: '>=12'}
+
+  fs-extra@11.3.4:
+    resolution: {integrity: sha512-CTXd6rk/M3/ULNQj8FBqBWHYBVYybQ3VPBw0xGKFe3tuH7ytT6ACnvzpIQ3UZtB8yvUKC2cXn1a+x+5EVQLovA==}
+    engines: {node: '>=14.14'}
 
   fs-extra@8.1.0:
     resolution: {integrity: sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g==}
@@ -4923,6 +4951,12 @@ snapshots:
   fs-constants@1.0.0: {}
 
   fs-extra@10.1.0:
+    dependencies:
+      graceful-fs: 4.2.11
+      jsonfile: 6.2.0
+      universalify: 2.0.1
+
+  fs-extra@11.3.4:
     dependencies:
       graceful-fs: 4.2.11
       jsonfile: 6.2.0

@@ -19,6 +19,10 @@ files:
   - node_modules/**
   - package.json
 
+# pnpm の symlink を electron-builder が解決できないため
+# asar 圧縮を無効化して実体ファイルとして配置する
+asar: false
+
 linux:
   target:
     - deb
