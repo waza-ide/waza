@@ -1,8 +1,8 @@
 # Waza — セッション引き継ぎ
 
 ## 最終更新
-- 日時: 2026-04-18
-- 担当エージェント: Antigravity (Phase 6: 並列実装 / Phase 7: Electron MVP)
+- 日時: 2026-04-19
+- 担当エージェント: Antigravity (Phase 7: Electron MVP 完了)
 
 ## 完了タスク
 - [Phase 1] モノレポ初期構造（CLAUDE.md / AGENTS.md / STRUCTURE.md / pnpm workspace）
@@ -25,12 +25,15 @@
   - src/renderer/components/WazaSidebar.tsx — ModelRouter連携チャットUI
   - tsconfig.main/renderer / vite.config.ts / electron-builder.yml / AGENTS.md
   - build:main ✅ / build:renderer ✅（253KB bundle）
+- [Phase 7] .deb パッケージ生成 ✅ — `waza_0.1.0_amd64.deb` (80MB) / `waza_0.1.0_x86_64.AppImage` (120MB)
+  - electron-builder.yml: maintainer / artifactName 追記
+  - package.json: author / description / homepage 追記
+  - commit: f116f65
 
 ## 次のタスク（候補）
-- Electron起動確認（Electronダウンロード後: `pnpm desktop:electron`）
-  → `packages/desktop/electron` または `NODE_ENV=development pnpm desktop:electron`
-- .deb パッケージ生成: `pnpm desktop:package` → `sudo dpkg -i release/waza_*.deb`
-- FileTreeの再帰展開深度制限（現在は無制限）
+- `sudo dpkg -i packages/desktop/release/waza_0.1.0_amd64.deb && waza` — インストール・起動確認（要ターミナル）
+- Electron開発サーバー起動確認（詳細は下記手順参照）
+- FileTreeの再帰展開（現在はルートのみ、サブディレクトリ展開は未実装）
 - AgentLoop を extension の loop.ts から desktop に移植
 - 自動アップデート（electron-updater）
 - Marketplace正式公開（publisher登録 `waza-ide`・アイコン最適化 128px）
@@ -42,10 +45,12 @@
 - アイコン icon.png が384KB（Marketplace提出前に最適化必要）
 - FROZEN types.ts に "gemini" を追記済み（union拡張のため破壊なし）
 - @anthropic-ai/sdk の isAvailable() は models.list() を使用（API変更時に修正必要）
-- pnpm approve-builds で electron build scripts 承認中（ダウンロード待ち）
+- FileTree: ルートのエントリーのみ表示（サブディレクトリのクリック展開は状態管理のみで再帰fetchなし）
 
 ## Electron 開発サーバー起動手順
 ```bash
+export PATH="$HOME/.local/share/pnpm:$PATH"
+
 # Terminal 1（renderer Vite dev server）
 cd packages/desktop && pnpm dev:renderer
 
@@ -60,4 +65,4 @@ NODE_ENV=development pnpm -F @waza/desktop electron
 - core の dist/ をビルドしてから extension の typecheck を実行
 - pnpm は `~/.local/share/pnpm/pnpm` にある（PATH要export）
 - `pnpm -r build` は desktop パッケージを含む（5パッケージ）
-- Electron起動前に `pnpm approve-builds` + electron ダウンロードが必要
+- packages/desktop/release/ は .gitignore 対象（バイナリは大きすぎるため）
