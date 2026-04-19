@@ -3,7 +3,7 @@ import { useTheme } from '../context/ThemeContext.js';
 
 export const AVAILABLE_MODELS = [
   { id: 'auto',              label: 'auto',             desc: 'Local-first auto select' },
-  { id: 'cocoro',            label: 'cocoro-OS',        desc: 'Local' },
+  { id: 'cocoro',            label: 'cocoro-OS',        desc: 'Qwen 2.5 72B · Local GPU' },
   { id: 'ollama/llama3.2',   label: 'Llama 3.2',        desc: 'Ollama · Local' },
   { id: 'claude-sonnet-4-6', label: 'Claude Sonnet',    desc: 'Anthropic · Cloud' },
   { id: 'claude-opus-4-6',   label: 'Claude Opus',      desc: 'Anthropic · Cloud' },

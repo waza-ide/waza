@@ -1,8 +1,14 @@
 import { ClaudeProvider } from "../providers/claude.js";
 import { GeminiProvider } from "../providers/gemini.js";
 import { OllamaProvider } from "../providers/ollama.js";
+import { CocoroCLMProvider } from "../providers/cocoro_clm.js";
 import type { BaseProvider } from "../providers/base.js";
 import type { ModelConfig } from "../models/config.js";
+
+// cocoro-llm-server (mdl-systems internal GPU server: RTX PRO 6000 Blackwell)
+const COCORO_CLM_URL = "http://192.168.50.112:8000";
+const COCORO_CLM_API_KEY = "mdl-llm-2026";
+const COCORO_CLM_MODEL = "gpt-4o"; // alias for Qwen 2.5 72B AWQ
 
 const COCORO_URL = "http://localhost:8001";
 const OLLAMA_URL = "http://localhost:11434";
@@ -15,16 +21,18 @@ export class ModelRouter {
   /**
    * 現在利用可能なプロバイダー名の一覧を返す
    */
-  async getAvailableProviders(): Promise<Array<"cocoro" | "ollama" | "claude" | "gemini">> {
-    const [cocoroOk, ollamaOk] = await Promise.all([
+  async getAvailableProviders(): Promise<Array<"cocoro-clm" | "cocoro" | "ollama" | "claude" | "gemini">> {
+    const [cocoroClmOk, cocoroOk, ollamaOk] = await Promise.all([
+      this.checkUrl(`${COCORO_CLM_URL}/health`),
       this.checkUrl(`${COCORO_URL}/health`),
       this.checkUrl(`${OLLAMA_URL}/api/tags`),
     ]);
 
-    const available: Array<"cocoro" | "ollama" | "claude" | "gemini"> = [];
+    const available: Array<"cocoro-clm" | "cocoro" | "ollama" | "claude" | "gemini"> = [];
+    if (cocoroClmOk) available.push("cocoro-clm");
     if (cocoroOk) available.push("cocoro");
     if (ollamaOk) available.push("ollama");
-    available.push("claude"); // クラウドは常にリスト掲載（API キーなしの場合は呼び出し時にエラー）
+    available.push("claude");
     if (process.env["GEMINI_API_KEY"]) available.push("gemini");
     return available;
   }
@@ -39,10 +47,12 @@ export class ModelRouter {
 
     switch (config.provider) {
       case "cocoro":
-        return new OllamaProvider({
-          kind: "ollama",
-          model: config.model === "default" ? "llama3.2" : config.model,
-          baseUrl: `${COCORO_URL}/v1`,
+        // cocoro-llm-server (internal GPU server) — OpenAI-compatible
+        return new CocoroCLMProvider({
+          kind: "cocoro",
+          model: config.model === "default" ? COCORO_CLM_MODEL : config.model,
+          baseUrl: `${COCORO_CLM_URL}/v1`,
+          apiKey: COCORO_CLM_API_KEY,
         });
       case "ollama":
         return new OllamaProvider({
@@ -69,6 +79,15 @@ export class ModelRouter {
    * auto モード: cocoro → ollama → claude の順で利用可能なものを選ぶ
    */
   private async resolveAuto(): Promise<BaseProvider> {
+    // Priority: cocoro-llm-server → local ollama → claude fallback
+    if (await this.checkUrl(`${COCORO_CLM_URL}/health`)) {
+      return new CocoroCLMProvider({
+        kind: "cocoro",
+        model: COCORO_CLM_MODEL,
+        baseUrl: `${COCORO_CLM_URL}/v1`,
+        apiKey: COCORO_CLM_API_KEY,
+      });
+    }
     if (await this.checkUrl(`${COCORO_URL}/health`)) {
       return new OllamaProvider({
         kind: "ollama",
@@ -88,9 +107,6 @@ export class ModelRouter {
       model: "claude-sonnet-4-5",
       apiKey: process.env["ANTHROPIC_API_KEY"],
     });
-    // Gemini は claude が失敗した場合のフォールバック
-    // （ClaudeProvider のコンストラクタが apiKey なしでも例外を投げるため
-    //   ここでは到達しない場合がある）
   }
 
   private async checkUrl(url: string): Promise<boolean> {

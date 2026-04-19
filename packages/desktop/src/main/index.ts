@@ -14,9 +14,13 @@ function createWindow(): BrowserWindow {
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    backgroundColor: '#ffffff',
-    titleBarStyle: 'hidden',      // hides native title bar entirely
-    trafficLightPosition: { x: 12, y: 10 },  // macOS traffic lights position
+    backgroundColor: '#00000000',   // transparent for rounded corners
+    transparent: true,              // enables rounded corners via CSS
+    titleBarStyle: 'hidden',
+    trafficLightPosition: { x: 14, y: 12 },
+    roundedCorners: true,           // macOS native rounded — on Linux handled by WM
+    hasShadow: true,
+    vibrancy: undefined,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,

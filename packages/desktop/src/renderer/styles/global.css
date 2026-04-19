@@ -1,4 +1,4 @@
-/* Inter フォント読み込み */
+/* Inter font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
 *, *::before, *::after {
@@ -7,7 +7,15 @@
   padding: 0;
 }
 
-html, body, #root {
+/* Transparent root — rounded window corners require the app itself to clip */
+html {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+body {
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -16,21 +24,29 @@ html, body, #root {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* ライトテーマ（デフォルト） */
-body {
+  /* Rounded corners — clip app content into rounded rect */
+  border-radius: 12px;
   background: #ffffff;
   color: #1a1a1a;
+  /* Subtle window shadow for depth */
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 20px 60px rgba(0, 0, 0, 0.18);
 }
 
-/* ダークテーマ */
+/* Dark theme */
 body[data-theme="dark"] {
   background: #111111;
   color: #f0f0f0;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.06), 0 20px 60px rgba(0, 0, 0, 0.55);
 }
 
-/* カスタムスクロールバー — ライト */
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* Scrollbar — light */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -39,7 +55,7 @@ body[data-theme="dark"] {
 }
 ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
-/* カスタムスクロールバー — ダーク */
+/* Scrollbar — dark */
 body[data-theme="dark"] ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
 }
@@ -47,24 +63,18 @@ body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* テキストセレクション */
-::selection {
-  background: rgba(0, 102, 204, 0.2);
-}
-body[data-theme="dark"] ::selection {
-  background: rgba(59, 130, 246, 0.3);
-}
+/* Text selection */
+::selection { background: rgba(0, 102, 204, 0.2); }
+body[data-theme="dark"] ::selection { background: rgba(59, 130, 246, 0.3); }
 
-/* フォーカスリング */
+/* Focus ring */
 :focus-visible {
   outline: 1.5px solid #0066cc;
   outline-offset: 1px;
 }
-body[data-theme="dark"] :focus-visible {
-  outline-color: #3b82f6;
-}
+body[data-theme="dark"] :focus-visible { outline-color: #3b82f6; }
 
-/* ボタンリセット */
+/* Button reset */
 button {
   background: none;
   border: none;
@@ -74,15 +84,13 @@ button {
   color: inherit;
   line-height: inherit;
 }
-button:disabled {
-  cursor: default;
-}
+button:disabled { cursor: default; }
 
-/* ドラッグ可能領域 */
+/* Drag regions */
 .drag-region { -webkit-app-region: drag; }
 .no-drag { -webkit-app-region: no-drag; }
 
-/* アニメーション */
+/* Animations */
 @keyframes pulse {
   0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
   40%           { opacity: 1;   transform: scale(1);   }
@@ -96,4 +104,12 @@ button:disabled {
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* Connection status indicator (StatusBar) */
+.cocoro-connected {
+  color: #22c55e;
+}
+.cocoro-disconnected {
+  color: #9ca3af;
 }
