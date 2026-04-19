@@ -2,7 +2,7 @@
 
 ## 最終更新
 - 日時: 2026-04-19
-- 担当エージェント: Antigravity (Phase 9: v0.3.0 リリース)
+- 担当エージェント: Antigravity (Phase 10: v0.4.0 Codex風UIリデザイン)
 
 ## 完了タスク
 - [Phase 1] モノレポ初期構造（CLAUDE.md / AGENTS.md / STRUCTURE.md / pnpm workspace）
@@ -61,21 +61,21 @@
   - commit: f116f65
 
 ## 次のタスク（候補）
-- Phase 9 完了 ✅ — v0.3.0 リリース済み
-- [Phase 9] Task A — 自動アップデート:
-  - src/main/updater.ts / IPC updater:* 3本 / UpdaterBadge.tsx
-  - electron-builder.yml: GitHub publish設定 / autoupdate files 確認
-  - commit: d75a739 / tag: v0.3.0 push済み
-  - waza_0.3.0_amd64.deb (80MB) 生成確認
-- [Phase 9] Task B — マルチファイル編集:
-  - types/editor.ts (EditorTab/MultiFileEdit) / hooks/useEditorTabs.ts (tabsRefパターン)
-  - TabBar.tsx / MultiFileDiffView.tsx / UpdaterBadge.tsx
-  - Editor.tsx: onSave()→void / onChange コールバック追加
-  - App.tsx: タイトルバー + タブ管理 + MultiFileDiff統合
-  - tests: desktop 24/24 / 全パッケージ 50/50 pass
-- Phase 10候補: WazaSidebar からエージェント経由でMultiFileEdit提案を受け取る実装
-- Phase 10候補: ファイル検索（Cmd+P / ファイル名インクリメンタルサーチ）
-- Phase 10候補: Marketplace正式公開（publisher登録 `waza-ide`・アイコン最適化）
+- Phase 10 完了 ✅ — v0.4.0 リリース済み (commit: 7c94dc1 / tag: v0.4.0)
+- [Phase 10] Codex風UIリデザイン:
+  - styles/tokens.ts (デザイントークン) / styles/global.css (グローバルリセット)
+  - layout/TitleBar.tsx (drag-region) / layout/ActivityBar.tsx / layout/Sidebar.tsx
+  - AgentHistory.tsx / AgentPanel.tsx / Composer.tsx
+  - Editor.tsx: tab/onChange(id)/onSave(id) インターフェース統一
+  - App.tsx: ActivityBar(48)+Sidebar(240)+MainArea(flex) / WazaSidebar廃止
+  - layout.test.ts: 19テスト追加 / 全体 64/64 pass
+  - waza_0.4.0_amd64.deb (81MB) 生成済み
+- Phase 11候補: ファイル検索（Cmd+P / インクリメンタルサーチ）
+- Phase 11候補: Search ActivityBar有効化（現在グレーアウト）
+- Phase 11候補: Agent経由マルチファイル編集プロポーザル → MultiFileDiffView表示
+- Phase 11候補: Marketplace正式公開（publisher登録 `waza-ide`・アイコン最適化）
+- Phase 11候補: モデル選択モーダル（Composerの◉ボタンから起動）
+
 
 ## 未解決事項
 - packages/extension/src/router/index.ts — Phase 1 旧実装残存（未使用）
