@@ -13,6 +13,9 @@ interface WazaAPI {
   dialog: {
     openFolder(): Promise<string | null>;
   };
+  agent: {
+    exec(command: string, cwd: string): Promise<{ success: boolean; output: string }>;
+  };
 }
 
 declare global {

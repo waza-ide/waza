@@ -14,4 +14,8 @@ contextBridge.exposeInMainWorld('wazaAPI', {
     openFolder: () =>
       ipcRenderer.invoke('dialog:openFolder'),
   },
+  agent: {
+    exec: (command: string, cwd: string) =>
+      ipcRenderer.invoke('agent:exec', command, cwd),
+  },
 });

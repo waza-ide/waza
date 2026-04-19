@@ -1,29 +1,57 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { ModelRouter } from '@waza/core';
+import { DesktopAgentLoop } from '../agent/loop.js';
+import type { AgentState } from '../agent/types.js';
 
 interface WazaSidebarProps {
   currentFile: string | null;
+  rootDir?: string | null;
 }
 
 interface LogEntry {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
 }
 
 const router = new ModelRouter();
+let agentLoop: DesktopAgentLoop | null = null;
 
-export function WazaSidebar({ currentFile }: WazaSidebarProps): JSX.Element {
+function getOrCreateLoop(workDir: string): DesktopAgentLoop {
+  if (!agentLoop) {
+    agentLoop = new DesktopAgentLoop(router, workDir);
+  }
+  return agentLoop;
+}
+
+function stateToMessage(state: AgentState): string | null {
+  switch (state.status) {
+    case 'thinking': return `⠋ ${state.message}`;
+    case 'acting': return `⚙️ ツール実行: ${state.action}`;
+    case 'stopped': return '⏹ 停止しました';
+    default: return null;
+  }
+}
+
+export function WazaSidebar({ currentFile, rootDir }: WazaSidebarProps): JSX.Element {
   const [input, setInput] = useState('');
   const [log, setLog] = useState<LogEntry[]>([]);
-  const [running, setRunning] = useState(false);
+  const [agentState, setAgentState] = useState<AgentState>({ status: 'idle' });
   const logEndRef = useRef<HTMLDivElement>(null);
+  const workDir = rootDir ?? currentFile?.split('/').slice(0, -1).join('/') ?? process.cwd?.() ?? '/tmp';
+
+  // agentLoopのworkDirを同期
+  useEffect(() => {
+    if (agentLoop) agentLoop.setWorkDir(workDir);
+  }, [workDir]);
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [log]);
+  }, [log, agentState]);
 
-  async function handleSubmit(): Promise<void> {
+  const running = agentState.status === 'thinking' || agentState.status === 'acting';
+
+  const handleSubmit = useCallback(async (): Promise<void> => {
     if (!input.trim() || running) return;
 
     const userMessage = input.trim();
@@ -33,38 +61,48 @@ export function WazaSidebar({ currentFile }: WazaSidebarProps): JSX.Element {
       content: userMessage,
       timestamp: new Date(),
     }]);
-    setRunning(true);
 
-    try {
-      const systemContent = currentFile
-        ? `あなたはWazaというAIコーディングアシスタントです。現在編集中のファイル: ${currentFile}`
-        : 'あなたはWazaというAIコーディングアシスタントです。';
+    const loop = getOrCreateLoop(workDir);
 
-      const provider = await router.route({ provider: 'auto', model: 'default' });
-      const response = await provider.complete({
-        messages: [
-          { role: 'system', content: systemContent },
-          { role: 'user', content: userMessage },
-        ],
-        model: provider.model,
-        maxTokens: 2048,
-      });
+    // StateChange ハンドラー登録（一時的）
+    const unsubscribe = loop.onStateChange((state: AgentState) => {
+      setAgentState(state);
 
-      setLog(prev => [...prev, {
-        role: 'assistant',
-        content: response.content,
-        timestamp: new Date(),
-      }]);
-    } catch (err) {
-      setLog(prev => [...prev, {
-        role: 'assistant',
-        content: `⚠️ エラー: ${err instanceof Error ? err.message : String(err)}`,
-        timestamp: new Date(),
-      }]);
-    } finally {
-      setRunning(false);
-    }
-  }
+      if (state.status === 'done') {
+        setLog(prev => [...prev, {
+          role: 'assistant',
+          content: state.result,
+          timestamp: new Date(),
+        }]);
+        unsubscribe();
+        setAgentState({ status: 'idle' });
+      } else if (state.status === 'error') {
+        setLog(prev => [...prev, {
+          role: 'assistant',
+          content: `⚠️ エラー: ${state.message}`,
+          timestamp: new Date(),
+        }]);
+        unsubscribe();
+        setAgentState({ status: 'idle' });
+      } else if (state.status === 'stopped') {
+        setLog(prev => [...prev, {
+          role: 'system',
+          content: '⏹ 停止しました',
+          timestamp: new Date(),
+        }]);
+        unsubscribe();
+        setAgentState({ status: 'idle' });
+      }
+    });
+
+    await loop.run(userMessage);
+  }, [input, running, workDir]);
+
+  const handleStop = useCallback((): void => {
+    agentLoop?.stop();
+  }, []);
+
+  const statusMessage = stateToMessage(agentState);
 
   return (
     <div style={{
@@ -95,6 +133,25 @@ export function WazaSidebar({ currentFile }: WazaSidebarProps): JSX.Element {
             {currentFile.split('/').pop()}
           </span>
         )}
+        {running && (
+          <button
+            id="stop-agent-btn"
+            onClick={handleStop}
+            title="停止"
+            style={{
+              padding: '2px 8px',
+              background: '#b91c1c',
+              border: 'none',
+              borderRadius: 4,
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: 11,
+              flexShrink: 0,
+            }}
+          >
+            ⏹ 停止
+          </button>
+        )}
       </div>
 
       {/* ログ */}
@@ -114,34 +171,49 @@ export function WazaSidebar({ currentFile }: WazaSidebarProps): JSX.Element {
             marginTop: 32,
           }}>
             <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.3 }}>技</div>
-            <div>Wazaに質問してください</div>
+            <div>Wazaに質問や指示をしてください</div>
+            <div style={{ fontSize: 11, marginTop: 8, color: '#30363d' }}>
+              ファイル操作・コマンド実行が可能です
+            </div>
           </div>
         )}
+
         {log.map((entry, i) => (
           <div key={i} style={{
             alignSelf: entry.role === 'user' ? 'flex-end' : 'flex-start',
             maxWidth: '90%',
-            background: entry.role === 'user' ? '#1f6feb' : '#161b22',
-            border: `1px solid ${entry.role === 'user' ? '#1f6feb' : '#30363d'}`,
+            background:
+              entry.role === 'user' ? '#1f6feb' :
+              entry.role === 'system' ? '#21262d' : '#161b22',
+            border: `1px solid ${
+              entry.role === 'user' ? '#1f6feb' :
+              entry.role === 'system' ? '#484f58' : '#30363d'
+            }`,
             borderRadius: entry.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
             padding: '8px 12px',
             fontSize: 13,
             lineHeight: 1.6,
-            color: '#c9d1d9',
+            color: entry.role === 'system' ? '#8b949e' : '#c9d1d9',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
           }}>
             {entry.content}
           </div>
         ))}
-        {running && (
+
+        {/* 実行中ステータス */}
+        {statusMessage && (
           <div style={{
             alignSelf: 'flex-start',
             color: '#8b949e',
-            fontSize: 13,
+            fontSize: 12,
             padding: '4px 8px',
+            background: '#161b22',
+            border: '1px solid #21262d',
+            borderRadius: 8,
+            animation: 'pulse 1.5s ease-in-out infinite',
           }}>
-            ⠋ 考え中...
+            {statusMessage}
           </div>
         )}
         <div ref={logEndRef} />
@@ -155,6 +227,7 @@ export function WazaSidebar({ currentFile }: WazaSidebarProps): JSX.Element {
       }}>
         <div style={{ display: 'flex', gap: 8 }}>
           <textarea
+            id="waza-input"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => {
@@ -165,21 +238,24 @@ export function WazaSidebar({ currentFile }: WazaSidebarProps): JSX.Element {
             }}
             placeholder="Wazaに指示する（Shift+Enter で改行）"
             rows={3}
+            disabled={running}
             style={{
               flex: 1,
               background: '#161b22',
               border: '1px solid #30363d',
               borderRadius: 6,
-              color: '#c9d1d9',
+              color: running ? '#484f58' : '#c9d1d9',
               fontSize: 13,
               padding: '8px 10px',
               resize: 'none',
               outline: 'none',
               fontFamily: 'inherit',
               lineHeight: 1.5,
+              cursor: running ? 'not-allowed' : 'text',
             }}
           />
           <button
+            id="send-btn"
             onClick={() => { void handleSubmit(); }}
             disabled={running || !input.trim()}
             style={{

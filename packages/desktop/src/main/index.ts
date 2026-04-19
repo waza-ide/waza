@@ -60,6 +60,23 @@ ipcMain.handle('dialog:openFolder', async (event) => {
   return result.canceled ? null : result.filePaths[0] ?? null;
 });
 
+// IPC: シェルコマンド実行（エージェントツール用）
+ipcMain.handle('agent:exec', async (_event, command: string, cwd: string) => {
+  const { execSync } = await import('node:child_process');
+  try {
+    const output = execSync(command, {
+      cwd,
+      timeout: 30_000,
+      encoding: 'utf-8',
+      maxBuffer: 1024 * 1024,
+    });
+    return { success: true, output: String(output) };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { success: false, output: message };
+  }
+});
+
 app.whenReady().then(() => {
   createWindow();
   app.on('activate', () => {

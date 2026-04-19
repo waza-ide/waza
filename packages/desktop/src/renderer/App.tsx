@@ -49,6 +49,7 @@ export function App(): JSX.Element {
           rootDir={rootDir}
           onSelectFile={handleSelectFile}
           onOpenFolder={handleOpenFolder}
+          selectedPath={openFile?.path ?? null}
         />
       </div>
 
@@ -69,7 +70,7 @@ export function App(): JSX.Element {
         display: 'flex',
         flexDirection: 'column',
       }}>
-        <WazaSidebar currentFile={openFile?.path ?? null} />
+        <WazaSidebar currentFile={openFile?.path ?? null} rootDir={rootDir} />
       </div>
     </div>
   );
