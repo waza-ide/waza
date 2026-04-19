@@ -3,22 +3,23 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![VSCode](https://img.shields.io/badge/VSCode-%5E1.87.0-blue)](https://marketplace.visualstudio.com/items?itemName=waza-ide.waza)
 [![CI](https://github.com/waza-ide/waza/actions/workflows/ci.yml/badge.svg)](https://github.com/waza-ide/waza/actions)
-[![Release](https://img.shields.io/github/v/release/waza-ide/waza)](https://github.com/waza-ide/waza/releases/latest)
+[![Release](https://img.shields.io/badge/release-v1.5.0-brightgreen)](https://github.com/waza-ide/waza/releases/tag/v1.5.0)
+[![Tests](https://img.shields.io/badge/tests-375%20passing-brightgreen)](#)
 
-> **Privacy-first AI coding agent. Your code stays on your machine.**
+> **Privacy-first autonomous AI coding IDE. Your code stays on your machine.**
 
 ---
 
 ## What is Waza?
 
-Waza (技) is a privacy-first AI coding IDE with an autonomous agent loop.  
-It automatically routes to **local models first** (cocoro-OS, Ollama),  
-falling back to cloud (Claude, Gemini) only when needed.  
+Waza (技) is a privacy-first autonomous AI coding IDE.  
+It routes to **local LLMs first** (cocoro-OS, Ollama) and falls back to cloud (Claude, Gemini) only when needed.  
+An autonomous agent loop plans tasks, uses tools, and asks for your review before making destructive changes.  
 **Your code never leaves your machine by default.**
 
 ---
 
-## Privacy-first: Local Model Routing
+## Privacy-first routing
 
 ```
 Request
@@ -33,15 +34,35 @@ No telemetry. No data collection. Local-first by design.
 
 ## Features
 
-- 🎨 **Codex-inspired UI** — Light / Dark theme, auto-detects OS setting
-- 🤖 **Autonomous Agent Loop** — Task → Step → Review cycle with Pause/Resume/Cancel
-- 🔀 **Automatic model routing** — local-first, cloud fallback
-- 🖥️ **Local LLM support** — OpenAI-compatible API (cocoro-OS, Ollama, LiteLLM)
-- 📁 **File tools** — read, write, exec within your workspace
-- ✅ **Review Gateway** — Codex-style diff viewer with Accept / Reject before destructive ops
-- 💡 **Skills injection** — inject json-only / concise / test-first behaviors into agent prompts
-- ⌨️ **Model picker** — select auto / cocoro-OS / Ollama / Claude / Gemini from composer
-- 🔒 **CSP + nonce** — secure Webview implementation
+### UI (v1.5.0 — Codex-inspired)
+- 🎨 **Light / Dark theme** — Auto-detects OS setting (`prefers-color-scheme`), manual toggle in title bar
+- 🗂️ **Sidebar** — New thread / Automations / Skills nav + thread groups + file tree
+- 💬 **Model picker** — Select model inline: `auto` / `cocoro-OS` / `Ollama` / `Claude Sonnet` / `Claude Opus` / `Gemini 2.0 Flash`
+- 🖥️ **Welcome screen** — "Let's build" with folder selector
+- 📊 **Status bar** — `Local | Worktree | Cloud` + Git branch + cocoro-OS live indicator (🟢/🔴)
+- 🪟 **Monaco editor** — Theme syncs automatically (`vs` / `vs-dark`)
+
+### Agent (Codex Mode)
+- 🤖 **Autonomous agent loop** — Task → Step → tool cycle (up to 10 steps)
+- ⏸️ **Task controls** — Pause / Resume / Cancel / Retry in AgentPanel
+- 🛡️ **Review Gateway** — Diff-based review before any destructive file write, delete, or dangerous shell command
+- 📋 **Task store** — Zustand-based Task / Step state with live log streaming
+- 💡 **Skills** — `json-only` / `concise` / `test-first` injected into system prompt; custom skills supported
+
+### Local LLM (LocalProvider)
+- 🖧 **OpenAI-compatible API** — any server speaking `/v1/chat/completions`
+- ✅ **Health check** — `GET /v1/models` with 3s timeout
+- ⚡ **SSE streaming** — full `data:` chunk handling including `[DONE]`
+- 🔄 **Auto-fallback** — `routeWithPreference()` tries local first, falls back to Claude on failure
+
+### Model providers
+| Provider | Type | Kind |
+|---|---|---|
+| cocoro-OS (qwen25-72b) | Local GPU | `LocalProvider` |
+| Ollama | Local CPU/GPU | `OllamaProvider` |
+| Claude Sonnet / Opus | Cloud | `ClaudeProvider` |
+| Gemini 2.0 Flash | Cloud | `GeminiProvider` |
+| CocoroCLM | OpenAI-compat | `CocoroCLMProvider` |
 
 ---
 
@@ -60,85 +81,138 @@ sudo dpkg -i waza_1.5.0_amd64.deb
 waza
 ```
 
-Download from: **[GitHub Releases](https://github.com/waza-ide/waza/releases/latest)**
+Download both from: **[GitHub Releases → v1.5.0](https://github.com/waza-ide/waza/releases/tag/v1.5.0)**
 
 ### Requirements
 
-- VSCode 1.87.0+
-- Node.js 20+
-- (Optional) Local model server: OpenAI-compatible API on any port
+- VSCode 1.87.0+ (extension)
+- Node.js 20+ (development)
+- (Optional) Local LLM: any OpenAI-compatible inference server
 
 ---
 
 ## Quick Start
 
-1. Install the extension or open the desktop app
-2. Open Command Palette → `Waza: Open Agent Panel`
-3. Type your request — Waza will plan and use tools autonomously
-4. Accept or reject file changes with one click
+1. Install extension or desktop app
+2. Open Command Palette → `Waza: Open Agent Panel`  
+   (or press `Ctrl+Shift+W` / `Cmd+Shift+W`)
+3. Type your task in natural language
+4. Waza plans and executes autonomously — review diffs before changes are applied
 
 ---
 
-## Model Support
+## Configuration
 
-| Provider | Type | Status |
-|---|---|---|
-| cocoro-OS (qwen25-72b) | Local GPU | ✅ Supported |
-| Ollama | Local CPU/GPU | ✅ Supported |
-| Claude Sonnet / Opus | Cloud | ✅ Supported |
-| Gemini 2.0 Flash | Cloud | ✅ Supported |
-
-### Configure local model
+### Local model (`.vscode/settings.json`)
 
 ```json
-// .vscode/settings.json
 {
   "waza.preferLocalModel": true,
   "waza.localModelUrl": "http://your-server:8000/v1",
-  "waza.localModel": "your-model-name",
+  "waza.localModel": "qwen25-72b",
   "waza.localApiKey": ""
 }
 ```
 
-Set `WAZA_LOCAL_API_KEY` environment variable for the API key.
+> **Note**: `.vscode/settings.json` is gitignored. Copy from `.vscode/settings.json.example`.  
+> Set `WAZA_LOCAL_API_KEY` env var for the API key (takes priority over the settings file).
+
+### All settings
 
 | Setting | Default | Description |
 |---|---|---|
-| `waza.preferLocalModel` | `false` | Prefer local model over cloud |
-| `waza.localModelUrl` | `""` | Local model base URL (OpenAI-compatible) |
-| `waza.localModel` | `"qwen25-72b"` | Model name to request |
-| `waza.localApiKey` | `""` | Bearer token (env var takes priority) |
-| `waza.cloudModel` | `"claude-sonnet-4-5"` | Cloud fallback model |
+| `waza.preferLocalModel` | `false` | Route to local model first |
+| `waza.localModelUrl` | `""` | Base URL (OpenAI-compatible, e.g. `http://localhost:8000/v1`) |
+| `waza.localModel` | `"qwen25-72b"` | Model name |
+| `waza.localApiKey` | `""` | Bearer token (`WAZA_LOCAL_API_KEY` env var takes priority) |
+| `waza.anthropicApiKey` | `""` | Claude API key |
+| `waza.geminiApiKey` | `""` | Gemini API key |
 
 ---
 
 ## Architecture
 
-pnpm monorepo with five packages:
+pnpm monorepo — five packages:
 
-| Package | Role |
-|---|---|
-| `packages/desktop` | Electron desktop app (Vite + React + Monaco) |
-| `packages/extension` | VSCode extension (commands, Webview, agent loop) |
-| `packages/core` | Business logic: ModelRouter, LocalProvider, TaskQueue, Skills |
-| `packages/ui` | Shared React UI components |
-| `packages/cocoro-bridge` | External API bridge (cocoro-OS, Ollama) |
+| Package | Version | Role |
+|---|---|---|
+| `packages/desktop` | 1.5.0 | Electron desktop app (Vite + React + Monaco + Zustand) |
+| `packages/extension` | 1.5.0 | VSCode extension (commands, Webview, agent loop) |
+| `packages/core` | 0.0.1 | Business logic: ModelRouter, providers, Task model, Gateway, Skills, Automation |
+| `packages/ui` | — | Shared React UI components |
+| `packages/cocoro-bridge` | — | External API bridge |
 
 Dependency direction: `core` → `extension` / `desktop` (one-way only).
+
+### `@waza/core` public API (key exports)
+
+```typescript
+// Providers
+LocalProvider, CocoroCLMProvider, ClaudeProvider, GeminiProvider, OllamaProvider
+ModelRouter                    // routeWithPreference(preferLocal, localConfig?, apiKey?)
+
+// Agent / Task model
+Task, Step, TaskAction         // Codex Mode task data model
+Logger, createCaptureSink      // Structured logging
+
+// Review Gateway
+ReviewGateway, requiresReview  // Safe-writing gate with diff generation
+generateDiff, parseDiffLines   // Unified diff utilities
+
+// Skills
+BUILTIN_SKILLS, injectSkills   // System prompt injection
+buildSkillPrompt               // Per-skill prompt builder
+
+// Automation
+Automation, CronTrigger, FileWatchTrigger, GitHookTrigger
+
+// Telemetry
+HealthCheckable, isHealthCheckable, ProviderTelemetry
+```
+
+---
+
+## Tests
+
+```
+@waza/core          213 / 213
+@waza/desktop       132 / 132
+@waza/extension      15 /  15
+@waza/cocoro-bridge  10 /  10
+@waza/ui              5 /   5
+─────────────────────────────
+Total               375 / 375  ✅
+```
+
+```bash
+export PATH="$HOME/.local/share/pnpm:$PATH"
+pnpm build   # core must be built first
+pnpm test
+pnpm lint    # 0 errors
+```
+
+---
+
+## Development
+
+```bash
+git clone https://github.com/waza-ide/waza
+cd waza
+pnpm install
+pnpm build
+
+# Desktop dev server
+cd packages/desktop
+pnpm dev:renderer          # Terminal 1 — Vite
+NODE_ENV=development pnpm -F @waza/desktop electron  # Terminal 2 — Electron
+```
 
 ---
 
 ## Contributing
 
-We welcome contributions! Please read [AGENTS.md](AGENTS.md) before submitting PRs.
-
-```bash
-git clone https://github.com/waza-ide/waza
-pnpm install
-pnpm build   # build all packages
-pnpm test    # 375 tests
-pnpm lint    # 0 errors
-```
+Please read [AGENTS.md](AGENTS.md) before submitting PRs.  
+All PRs are automatically reviewed by CodeRabbit.
 
 ---
 
@@ -156,10 +230,10 @@ pnpm lint    # 0 errors
 
 ## Wazaとは
 
-WazaはVSCode向けのプライバシーファーストAI IDEです。  
-ローカルモデル（cocoro-OS、Ollama）が利用可能な場合は自動的にローカルへルーティング。  
+WazaはVSCode向けのプライバシーファーストAI IDE。  
+ローカルモデル（cocoro-OS、Ollama）が利用可能な場合は自動的にローカルへルーティングし、  
 利用できない場合のみクラウドモデル（Claude、Gemini）にフォールバック。  
-**デフォルトでコードは外部に送信されません。**
+エージェントが自律的にタスクを計画・実行し、破壊的な変更の前にレビューを求めます。
 
 ---
 
@@ -178,26 +252,26 @@ sudo dpkg -i waza_1.5.0_amd64.deb
 waza
 ```
 
-ダウンロード: **[GitHub Releases](https://github.com/waza-ide/waza/releases/latest)**
+ダウンロード: **[GitHub Releases → v1.5.0](https://github.com/waza-ide/waza/releases/tag/v1.5.0)**
 
 ---
 
-## 機能一覧
+## 機能概要（v1.5.0）
 
-- 🎨 **Codex風UI** — ライト/ダークテーマ（OS設定自動検知）
-- 🤖 **自律エージェントループ** — タスク駆動型 Pause/Resume/Cancel
-- 🔀 **自動モデルルーティング** — ローカル優先、クラウドフォールバック
-- 🖥️ **ローカルLLM対応** — OpenAI互換API（cocoro-OS、Ollama）
-- ✅ **Review Gateway** — 破壊的操作前に差分確認（Accept/Reject）
-- 💡 **Skill injection** — エージェントの振る舞いをカスタマイズ
-- ⌨️ **モデルピッカー** — Composerから直接モデル選択
+| カテゴリ | 機能 |
+|---|---|
+| **UI** | Codex風レイアウト / ライト・ダークテーマ / モデルピッカー / WelcomeScreen / StatusBar |
+| **エージェント** | 自律ループ / Pause・Resume・Cancel・Retry / Review Gateway / Skill injection |
+| **プロバイダー** | LocalProvider (OpenAI互換) / Ollama / Claude / Gemini / CocoroCLM |
+| **ルーティング** | ローカル優先 → 障害時クラウド自動フォールバック |
+| **セキュリティ** | APIキーはenv変数で管理 / `.vscode/settings.json` はgitignore |
 
 ---
 
 ## ローカルモデル設定
 
 ```json
-// .vscode/settings.json
+// .vscode/settings.json （gitignore済み — .example を参照）
 {
   "waza.preferLocalModel": true,
   "waza.localModelUrl": "http://your-server:8000/v1",
@@ -207,12 +281,6 @@ waza
 ```
 
 APIキーは `WAZA_LOCAL_API_KEY` 環境変数で設定（設定ファイルより優先）。
-
----
-
-## コントリビュート
-
-PRの前に [AGENTS.md](AGENTS.md) を必ず読んでください。
 
 ---
 
