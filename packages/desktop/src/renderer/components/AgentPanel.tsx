@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { tokens } from '../styles/tokens.js';
+import { useTheme } from '../context/ThemeContext.js';
 import type { AgentState } from '../agent/types.js';
 
 interface LogEntry {
@@ -12,30 +12,26 @@ interface AgentPanelProps {
   currentState: AgentState;
 }
 
-const STATE_ICON: Partial<Record<AgentState['status'], string>> = {
-  idle:     '○',
-  thinking: '◎',
-  acting:   '▶',
-  done:     '✓',
-  error:    '✗',
-  stopped:  '□',
-};
-
-const STATE_COLOR: Partial<Record<AgentState['status'], string>> = {
-  idle:     tokens.color.text.tertiary,
-  thinking: tokens.color.accent.blue,
-  acting:   tokens.color.accent.amber,
-  done:     tokens.color.accent.green,
-  error:    tokens.color.accent.red,
-  stopped:  tokens.color.text.tertiary,
-};
-
 export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element {
+  const { tokens } = useTheme();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [log.length, currentState.status]);
+
+  const STATE_ICON: Partial<Record<AgentState['status'], string>> = {
+    idle: '○', thinking: '◎', acting: '▶',
+    done: '✓', error: '✗', stopped: '□',
+  };
+  const STATE_COLOR: Partial<Record<AgentState['status'], string>> = {
+    idle:     tokens.color.text.tertiary,
+    thinking: tokens.color.accent.blue,
+    acting:   tokens.color.accent.amber,
+    done:     tokens.color.accent.green,
+    error:    tokens.color.accent.red,
+    stopped:  tokens.color.text.tertiary,
+  };
 
   if (log.length === 0 && currentState.status === 'idle') {
     return (
@@ -50,7 +46,7 @@ export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element 
         fontSize: tokens.font.size.sm,
         padding: tokens.space.xl,
       }}>
-        <span style={{ fontSize: 32, opacity: 0.2 }}>技</span>
+        <span style={{ fontSize: 28, opacity: 0.15 }}>技</span>
         <span>Wazaに指示してください</span>
       </div>
     );
@@ -66,14 +62,7 @@ export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element 
       gap: tokens.space.md,
     }}>
       {log.map((entry, i) => (
-        <div
-          key={i}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: tokens.space.xs,
-          }}
-        >
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: tokens.space.xs }}>
           <div style={{
             fontSize: tokens.font.size.xs,
             color: tokens.color.text.tertiary,
@@ -83,7 +72,9 @@ export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element 
           </div>
           <div style={{
             fontSize: tokens.font.size.sm,
-            color: entry.role === 'user' ? tokens.color.text.primary : tokens.color.text.secondary,
+            color: entry.role === 'user'
+              ? tokens.color.text.primary
+              : tokens.color.text.secondary,
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
@@ -93,13 +84,9 @@ export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element 
         </div>
       ))}
 
-      {/* 実行中ステータス */}
+      {/* 実行中 — アニメーションドット */}
       {(currentState.status === 'thinking' || currentState.status === 'acting') && (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: tokens.space.xs,
-        }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.space.xs }}>
           <div style={{
             fontSize: tokens.font.size.xs,
             color: STATE_COLOR[currentState.status],
@@ -108,35 +95,26 @@ export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element 
             gap: tokens.space.xs,
           }}>
             <span>{STATE_ICON[currentState.status]}</span>
-            <span>{
-              currentState.status === 'thinking' ? currentState.message :
-              currentState.status === 'acting' ? `実行: ${currentState.action}` : ''
-            }</span>
+            <span>
+              {currentState.status === 'thinking' ? currentState.message : `実行: ${currentState.action}`}
+            </span>
           </div>
-          {/* アニメーションドット */}
-          <div style={{
-            display: 'flex',
-            gap: tokens.space.xs,
-            paddingLeft: 2,
-          }}>
+          <div style={{ display: 'flex', gap: tokens.space.xs, paddingLeft: 2 }}>
             {[0, 1, 2].map(i => (
-              <span
-                key={i}
-                style={{
-                  display: 'inline-block',
-                  width: 4,
-                  height: 4,
-                  borderRadius: '50%',
-                  background: tokens.color.accent.blue,
-                  animation: `pulse 1.2s ${i * 0.2}s ease-in-out infinite`,
-                }}
-              />
+              <span key={i} style={{
+                display: 'inline-block',
+                width: 4,
+                height: 4,
+                borderRadius: '50%',
+                background: tokens.color.accent.blue,
+                animation: `pulse 1.2s ${i * 0.2}s ease-in-out infinite`,
+              }} />
             ))}
           </div>
         </div>
       )}
 
-      {/* error / stopped / done のステータス表示 */}
+      {/* error / stopped */}
       {(currentState.status === 'error' || currentState.status === 'stopped') && (
         <div style={{
           fontSize: tokens.font.size.xs,
@@ -145,13 +123,15 @@ export function AgentPanel({ log, currentState }: AgentPanelProps): JSX.Element 
           alignItems: 'center',
           gap: tokens.space.xs,
           padding: `${tokens.space.xs}px ${tokens.space.sm}px`,
-          background: `${STATE_COLOR[currentState.status]}11`,
+          background: `${STATE_COLOR[currentState.status]}18`,
           borderRadius: tokens.radius.md,
           border: `1px solid ${STATE_COLOR[currentState.status]}33`,
         }}>
           <span>{STATE_ICON[currentState.status]}</span>
           <span>
-            {currentState.status === 'error' ? `エラー: ${'message' in currentState ? currentState.message : ''}` : '停止しました'}
+            {currentState.status === 'error'
+              ? `エラー: ${'message' in currentState ? currentState.message : ''}`
+              : '停止しました'}
           </span>
         </div>
       )}

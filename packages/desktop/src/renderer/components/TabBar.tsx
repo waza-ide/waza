@@ -1,3 +1,4 @@
+import { useTheme } from '../context/ThemeContext.js';
 import type { EditorTab } from '../types/editor.js';
 
 interface TabBarProps {
@@ -8,18 +9,27 @@ interface TabBarProps {
 }
 
 export function TabBar({ tabs, activeTabId, onSelect, onClose }: TabBarProps): JSX.Element {
+  const { tokens } = useTheme();
+
   if (tabs.length === 0) {
-    return <div style={{ height: 35, borderBottom: '1px solid #21262d', background: '#0d1117' }} />;
+    return (
+      <div style={{
+        height: tokens.layout.tabBar,
+        borderBottom: `1px solid ${tokens.color.bg.border}`,
+        background: tokens.color.bg.sidebar,
+        flexShrink: 0,
+      }} />
+    );
   }
 
   return (
     <div style={{
       display: 'flex',
-      height: 35,
-      borderBottom: '1px solid #21262d',
+      height: tokens.layout.tabBar,
+      borderBottom: `1px solid ${tokens.color.bg.border}`,
       overflowX: 'auto',
       overflowY: 'hidden',
-      background: '#0d1117',
+      background: tokens.color.bg.sidebar,
       flexShrink: 0,
       scrollbarWidth: 'none',
     }}>
@@ -39,25 +49,34 @@ export function TabBar({ tabs, activeTabId, onSelect, onClose }: TabBarProps): J
               maxWidth: 180,
               height: '100%',
               cursor: 'pointer',
-              fontSize: 12,
-              color: isActive ? '#c9d1d9' : '#8b949e',
-              background: isActive ? '#161b22' : 'transparent',
-              borderRight: '1px solid #21262d',
-              borderTop: isActive ? '1px solid #1f6feb' : '1px solid transparent',
-              borderBottom: isActive ? '1px solid #161b22' : 'none',
+              fontSize: tokens.font.size.sm,
+              color: isActive ? tokens.color.text.primary : tokens.color.text.secondary,
+              background: isActive ? tokens.color.bg.base : 'transparent',
+              borderRight: `1px solid ${tokens.color.bg.border}`,
+              borderTop: isActive
+                ? `1.5px solid ${tokens.color.accent.blue}`
+                : '1.5px solid transparent',
               userSelect: 'none',
               flexShrink: 0,
-              transition: 'background 0.1s, color 0.1s',
+              transition: `background ${tokens.transition.fast}, color ${tokens.transition.fast}`,
               boxSizing: 'border-box',
+            }}
+            onMouseEnter={e => {
+              if (!isActive)
+                (e.currentTarget as HTMLDivElement).style.background = tokens.color.bg.hover;
+            }}
+            onMouseLeave={e => {
+              if (!isActive)
+                (e.currentTarget as HTMLDivElement).style.background = 'transparent';
             }}
           >
             {/* 未保存ドット */}
             {tab.isDirty && (
               <span style={{
-                width: 7,
-                height: 7,
+                width: 6,
+                height: 6,
                 borderRadius: '50%',
-                background: '#f78166',
+                background: tokens.color.accent.amber,
                 flexShrink: 0,
               }} />
             )}
@@ -79,14 +98,13 @@ export function TabBar({ tabs, activeTabId, onSelect, onClose }: TabBarProps): J
                 fontSize: 14,
                 lineHeight: 1,
                 padding: '1px 3px',
-                borderRadius: 3,
+                borderRadius: tokens.radius.sm,
                 flexShrink: 0,
-                color: '#8b949e',
-                transition: 'opacity 0.1s',
+                color: tokens.color.text.secondary,
+                transition: `opacity ${tokens.transition.fast}`,
               }}
-              className="tab-close-btn"
-              onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-              onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
+              onMouseEnter={e => { (e.currentTarget as HTMLSpanElement).style.opacity = '1'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLSpanElement).style.opacity = '0'; }}
             >
               ×
             </span>

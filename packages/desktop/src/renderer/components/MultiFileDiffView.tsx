@@ -1,5 +1,6 @@
 import { diffLines } from 'diff';
 import { useState } from 'react';
+import { useTheme } from '../context/ThemeContext.js';
 import type { MultiFileEdit } from '../types/editor.js';
 
 interface MultiFileDiffViewProps {
@@ -10,28 +11,6 @@ interface MultiFileDiffViewProps {
   onRejectFile: (path: string) => void;
 }
 
-const acceptBtnStyle = {
-  fontSize: 11,
-  padding: '2px 8px',
-  background: '#238636',
-  border: 'none',
-  borderRadius: 4,
-  color: '#fff',
-  cursor: 'pointer',
-  flexShrink: 0,
-} as const;
-
-const rejectBtnStyle = {
-  fontSize: 11,
-  padding: '2px 8px',
-  background: '#21262d',
-  border: '1px solid #30363d',
-  borderRadius: 4,
-  color: '#c9d1d9',
-  cursor: 'pointer',
-  flexShrink: 0,
-} as const;
-
 export function MultiFileDiffView({
   edit,
   onAcceptAll,
@@ -39,6 +18,7 @@ export function MultiFileDiffView({
   onAcceptFile,
   onRejectFile,
 }: MultiFileDiffViewProps): JSX.Element | null {
+  const { tokens } = useTheme();
   const [expanded, setExpanded] = useState<Set<string>>(
     () => new Set(edit?.files.map(f => f.path) ?? [])
   );
@@ -53,132 +33,146 @@ export function MultiFileDiffView({
     });
   }
 
+  const acceptStyle = {
+    fontSize: 11,
+    padding: '2px 8px',
+    background: tokens.color.accent.green,
+    border: 'none',
+    borderRadius: tokens.radius.sm,
+    color: '#fff',
+    cursor: 'pointer',
+    flexShrink: 0,
+  } as const;
+
+  const rejectStyle = {
+    fontSize: 11,
+    padding: '2px 8px',
+    background: tokens.color.bg.active,
+    border: `1px solid ${tokens.color.bg.border}`,
+    borderRadius: tokens.radius.sm,
+    color: tokens.color.text.secondary,
+    cursor: 'pointer',
+    flexShrink: 0,
+  } as const;
+
   return (
     <div style={{
-      background: '#0d1117',
-      border: '1px solid #30363d',
-      borderRadius: 6,
+      background: tokens.color.bg.surface,
+      border: `1px solid ${tokens.color.bg.border}`,
+      borderRadius: tokens.radius.md,
       overflow: 'hidden',
-      margin: 8,
+      margin: tokens.space.sm,
       flexShrink: 0,
     }}>
       {/* ヘッダー */}
       <div style={{
-        padding: '8px 12px',
-        borderBottom: '1px solid #21262d',
+        padding: `${tokens.space.sm}px ${tokens.space.md}px`,
+        borderBottom: `1px solid ${tokens.color.bg.border}`,
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
+        gap: tokens.space.sm,
         flexWrap: 'wrap',
       }}>
-        <span style={{ fontSize: 12, color: '#8b949e', flex: 1, minWidth: 0 }}>
+        <span style={{ fontSize: tokens.font.size.sm, color: tokens.color.text.secondary, flex: 1, minWidth: 0 }}>
           {edit.description}
-          <span style={{ marginLeft: 6, color: '#58a6ff' }}>
+          <span style={{ marginLeft: 8, color: tokens.color.accent.blue }}>
             {edit.files.length}ファイル
           </span>
         </span>
-        <button id="accept-all-btn" onClick={onAcceptAll} style={acceptBtnStyle}>
-          すべて承認
-        </button>
-        <button id="reject-all-btn" onClick={onRejectAll} style={rejectBtnStyle}>
-          すべて却下
-        </button>
+        <button id="accept-all-btn" onClick={onAcceptAll} style={acceptStyle}>すべて承認</button>
+        <button id="reject-all-btn" onClick={onRejectAll} style={rejectStyle}>すべて却下</button>
       </div>
 
       {/* ファイルごとのdiff */}
       {edit.files.map(file => {
         const changes = diffLines(file.originalContent, file.newContent);
         const isExpanded = expanded.has(file.path);
-        const addCount = changes
-          .filter(c => c.added)
-          .reduce((n, c) => n + (c.count ?? 0), 0);
-        const removeCount = changes
-          .filter(c => c.removed)
-          .reduce((n, c) => n + (c.count ?? 0), 0);
+        const addCount = changes.filter(c => c.added).reduce((n, c) => n + (c.count ?? 0), 0);
+        const removeCount = changes.filter(c => c.removed).reduce((n, c) => n + (c.count ?? 0), 0);
         const filename = file.path.split('/').pop() ?? file.path;
 
         return (
-          <div key={file.path} style={{ borderBottom: '1px solid #21262d' }}>
-            {/* ファイルヘッダー */}
+          <div key={file.path} style={{ borderBottom: `1px solid ${tokens.color.bg.borderSub}` }}>
             <div
               onClick={() => toggleExpanded(file.path)}
               style={{
-                padding: '6px 12px',
+                padding: `${tokens.space.xs}px ${tokens.space.md}px`,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: tokens.space.sm,
                 cursor: 'pointer',
-                fontSize: 12,
-                background: '#0d1117',
+                fontSize: tokens.font.size.sm,
+                background: tokens.color.bg.surface,
               }}
             >
-              <span style={{ color: '#8b949e', fontSize: 10 }}>
+              <span style={{ color: tokens.color.text.tertiary, fontSize: 10 }}>
                 {isExpanded ? '▾' : '▸'}
               </span>
               <span style={{
-                color: '#c9d1d9',
+                color: tokens.color.text.primary,
                 flex: 1,
-                fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                fontFamily: tokens.font.mono,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
+                fontSize: tokens.font.size.xs,
               }}>
                 {filename}
               </span>
-              <span style={{ color: '#3fb950', flexShrink: 0 }}>+{addCount}</span>
-              <span style={{ color: '#f85149', flexShrink: 0 }}>−{removeCount}</span>
+              <span style={{ color: tokens.color.diff.addedText, flexShrink: 0, fontSize: tokens.font.size.xs }}>
+                +{addCount}
+              </span>
+              <span style={{ color: tokens.color.diff.removedText, flexShrink: 0, fontSize: tokens.font.size.xs }}>
+                −{removeCount}
+              </span>
               <button
                 id={`accept-file-${filename}`}
                 onClick={e => { e.stopPropagation(); onAcceptFile(file.path); }}
-                style={acceptBtnStyle}
+                style={acceptStyle}
               >
                 承認
               </button>
               <button
                 id={`reject-file-${filename}`}
                 onClick={e => { e.stopPropagation(); onRejectFile(file.path); }}
-                style={rejectBtnStyle}
+                style={rejectStyle}
               >
                 却下
               </button>
             </div>
 
-            {/* diff本体 */}
             {isExpanded && (
               <div style={{
-                fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                fontFamily: tokens.font.mono,
                 fontSize: 12,
                 maxHeight: 250,
                 overflowY: 'auto',
-                borderTop: '1px solid #161b22',
+                borderTop: `1px solid ${tokens.color.bg.borderSub}`,
               }}>
                 {changes.map((change, i) => {
                   const lines = change.value.split('\n');
-                  // diffLinesの末尾の空文字（改行後）を除く
                   const displayLines = lines[lines.length - 1] === ''
-                    ? lines.slice(0, -1)
-                    : lines;
+                    ? lines.slice(0, -1) : lines;
                   return displayLines.map((line, j) => (
                     <div
                       key={`${i}-${j}`}
                       style={{
                         background: change.added
-                          ? 'rgba(63,185,80,0.12)'
+                          ? tokens.color.diff.added
                           : change.removed
-                            ? 'rgba(248,81,73,0.12)'
+                            ? tokens.color.diff.removed
                             : 'transparent',
                         color: change.added
-                          ? '#3fb950'
+                          ? tokens.color.diff.addedText
                           : change.removed
-                            ? '#f85149'
-                            : '#484f58',
+                            ? tokens.color.diff.removedText
+                            : tokens.color.text.tertiary,
                         padding: '0 16px',
                         whiteSpace: 'pre',
                         lineHeight: '18px',
                       }}
                     >
-                      {change.added ? '+' : change.removed ? '−' : ' '}
-                      {line}
+                      {change.added ? '+' : change.removed ? '−' : ' '}{line}
                     </div>
                   ));
                 })}

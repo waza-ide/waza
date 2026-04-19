@@ -2,7 +2,7 @@ import MonacoEditor from '@monaco-editor/react';
 import { useEffect, useRef, useState } from 'react';
 import type * as Monaco from 'monaco-editor';
 import { detectLanguage } from '../hooks/useEditorTabs.js';
-import { tokens } from '../styles/tokens.js';
+import { useTheme } from '../context/ThemeContext.js';
 import type { EditorTab } from '../types/editor.js';
 
 interface EditorProps {
@@ -12,6 +12,7 @@ interface EditorProps {
 }
 
 export function Editor({ tab, onChange, onSave }: EditorProps): JSX.Element {
+  const { tokens, theme } = useTheme();
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -54,9 +55,11 @@ export function Editor({ tab, onChange, onSave }: EditorProps): JSX.Element {
         gap: tokens.space.md,
         background: tokens.color.bg.base,
       }}>
-        <span style={{ fontSize: 48, opacity: 0.1 }}>技</span>
+        <span style={{ fontSize: 48, opacity: 0.08 }}>技</span>
         <span style={{ fontSize: tokens.font.size.base }}>ファイルを選択してください</span>
-        <span style={{ fontSize: tokens.font.size.sm, opacity: 0.6 }}>←  ツリーからファイルをクリック</span>
+        <span style={{ fontSize: tokens.font.size.sm, opacity: 0.5 }}>
+          ← ツリーからファイルをクリック
+        </span>
       </div>
     );
   }
@@ -81,10 +84,10 @@ export function Editor({ tab, onChange, onSave }: EditorProps): JSX.Element {
         </div>
       )}
 
-      {/* Monaco Editor */}
+      {/* Monaco Editor — テーマ切り替え対応 */}
       <MonacoEditor
         height="100%"
-        theme="vs-dark"
+        theme={theme === 'dark' ? 'vs-dark' : 'vs'}
         language={detectLanguage(tab.path)}
         value={tab.content}
         onMount={editor => { editorRef.current = editor; }}

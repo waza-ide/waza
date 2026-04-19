@@ -1,29 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '../context/ThemeContext.js';
 
 // 除外ディレクトリ
 const IGNORE = new Set(['.git', 'node_modules', 'dist', 'out', '.next', '__pycache__', '.DS_Store']);
 
-// 拡張子→色マップ
+// 拡張子→色マップ（テーマ非依存の固有色）
 const EXT_COLOR: Record<string, string> = {
-  ts: '#4fc1ff',
-  tsx: '#4ec9b0',
-  js: '#f7df1e',
-  jsx: '#f7df1e',
-  py: '#ffde57',
-  rs: '#f74c00',
-  md: '#8b949e',
-  json: '#f9c74f',
-  css: '#c084fc',
-  html: '#e34c26',
-  sh: '#89e051',
-  toml: '#9c4221',
-  yaml: '#cb171e',
-  yml: '#cb171e',
+  ts:   '#4fc1ff', tsx: '#4ec9b0',
+  js:   '#f7df1e', jsx: '#f7df1e',
+  py:   '#ffde57', rs:  '#f74c00',
+  md:   '#8b949e', json:'#f9c74f',
+  css:  '#c084fc', html:'#e34c26',
+  sh:   '#89e051', toml:'#9c4221',
+  yaml: '#cb171e', yml: '#cb171e',
 };
 
 function getFileColor(name: string): string {
   const ext = name.split('.').pop()?.toLowerCase() ?? '';
-  return EXT_COLOR[ext] ?? '#c9d1d9';
+  return EXT_COLOR[ext] ?? '#9ca3af';
 }
 
 interface DirEntry {
@@ -37,7 +31,7 @@ export interface TreeNode {
   path: string;
   isDirectory: boolean;
   depth: number;
-  children: TreeNode[] | null; // null = 未ロード, [] = 空
+  children: TreeNode[] | null;
   expanded: boolean;
 }
 
@@ -69,18 +63,19 @@ interface FileTreeNodeProps {
 }
 
 function FileTreeNodeView({ node, onToggle, onSelectFile, selectedPath }: FileTreeNodeProps): JSX.Element {
+  const { tokens, theme } = useTheme();
   const isSelected = !node.isDirectory && node.path === selectedPath;
   const indent = node.depth * 16 + 8;
+  const fileColor = node.isDirectory ? tokens.color.accent.blue : getFileColor(node.name);
+
+  const activeBg = theme === 'light' ? 'rgba(0,102,204,0.08)' : '#1f6feb33';
+  const hoverBg  = theme === 'light' ? tokens.color.bg.hover : '#161b22';
+  const activeBorder = theme === 'light' ? tokens.color.accent.blue : '#1f6feb';
 
   function handleClick(): void {
-    if (node.isDirectory) {
-      onToggle(node.path);
-    } else {
-      onSelectFile(node.path);
-    }
+    if (node.isDirectory) onToggle(node.path);
+    else onSelectFile(node.path);
   }
-
-  const fileColor = node.isDirectory ? '#58a6ff' : getFileColor(node.name);
 
   return (
     <>
@@ -95,21 +90,25 @@ function FileTreeNodeView({ node, onToggle, onSelectFile, selectedPath }: FileTr
           gap: 5,
           fontSize: 13,
           lineHeight: '22px',
-          color: isSelected ? '#ffffff' : fileColor,
-          background: isSelected ? '#1f6feb33' : 'transparent',
-          borderLeft: isSelected ? '2px solid #1f6feb' : '2px solid transparent',
+          color: isSelected ? tokens.color.text.primary : fileColor,
+          background: isSelected ? activeBg : 'transparent',
+          borderLeft: isSelected
+            ? `2px solid ${activeBorder}`
+            : '2px solid transparent',
           userSelect: 'none',
-          transition: 'background 0.1s',
+          transition: 'background 0.08s',
         }}
         onMouseEnter={e => {
-          if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = '#161b22';
+          if (!isSelected)
+            (e.currentTarget as HTMLDivElement).style.background = hoverBg;
         }}
         onMouseLeave={e => {
-          if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = 'transparent';
+          if (!isSelected)
+            (e.currentTarget as HTMLDivElement).style.background = 'transparent';
         }}
         title={node.path}
       >
-        <span style={{ fontSize: 10, width: 10, flexShrink: 0, opacity: 0.7 }}>
+        <span style={{ fontSize: 10, width: 10, flexShrink: 0, opacity: 0.6 }}>
           {node.isDirectory ? (node.expanded ? '▾' : '▸') : '·'}
         </span>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -131,7 +130,7 @@ function FileTreeNodeView({ node, onToggle, onSelectFile, selectedPath }: FileTr
             <div style={{
               paddingLeft: indent + 20,
               fontSize: 12,
-              color: '#484f58',
+              color: tokens.color.text.tertiary,
               lineHeight: '22px',
             }}>
               (空)
@@ -150,46 +149,39 @@ interface FileTreeProps {
   selectedPath?: string | null;
 }
 
-export function FileTree({ rootDir, onSelectFile, onOpenFolder, selectedPath = null }: FileTreeProps): JSX.Element {
+export function FileTree({
+  rootDir,
+  onSelectFile,
+  onOpenFolder,
+  selectedPath = null,
+}: FileTreeProps): JSX.Element {
+  const { tokens } = useTheme();
   const [nodes, setNodes] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ルートディレクトリが変わったら再ロード
   useEffect(() => {
-    if (!rootDir) {
-      setNodes([]);
-      return;
-    }
+    if (!rootDir) { setNodes([]); return; }
     setLoading(true);
-    void window.wazaAPI.fs.readDir(rootDir).then(entries => {
-      setNodes(entriesToNodes(entries, 0));
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    void window.wazaAPI.fs.readDir(rootDir)
+      .then(entries => { setNodes(entriesToNodes(entries, 0)); setLoading(false); })
+      .catch(() => setLoading(false));
   }, [rootDir]);
 
-  // ノードをpathで検索して更新するimmutableヘルパー
   const updateNode = useCallback(
-    (nodeList: TreeNode[], targetPath: string, updater: (n: TreeNode) => TreeNode): TreeNode[] => {
-      return nodeList.map(n => {
+    (nodeList: TreeNode[], targetPath: string, updater: (n: TreeNode) => TreeNode): TreeNode[] =>
+      nodeList.map(n => {
         if (n.path === targetPath) return updater(n);
-        if (n.children) {
-          return { ...n, children: updateNode(n.children, targetPath, updater) };
-        }
+        if (n.children) return { ...n, children: updateNode(n.children, targetPath, updater) };
         return n;
-      });
-    },
+      }),
     []
   );
 
   const handleToggle = useCallback(async (path: string): Promise<void> => {
-    // 現在のexpanded状態を取得
     const findNode = (nodeList: TreeNode[]): TreeNode | null => {
       for (const n of nodeList) {
         if (n.path === path) return n;
-        if (n.children) {
-          const found = findNode(n.children);
-          if (found) return found;
-        }
+        if (n.children) { const found = findNode(n.children); if (found) return found; }
       }
       return null;
     };
@@ -197,29 +189,19 @@ export function FileTree({ rootDir, onSelectFile, onOpenFolder, selectedPath = n
     setNodes(prev => {
       const target = findNode(prev);
       if (!target) return prev;
-
       if (target.expanded) {
-        // 折りたたみ（childrenは保持）
         return updateNode(prev, path, n => ({ ...n, expanded: false }));
       } else {
-        // 展開：未ロードなら非同期でchildrenを取得
         if (target.children === null) {
-          // まず展開中マークを立てる
           const next = updateNode(prev, path, n => ({ ...n, expanded: true, children: [] }));
-          // 非同期でファイル一覧取得
           void window.wazaAPI.fs.readDir(path).then(entries => {
-            setNodes(current =>
-              updateNode(current, path, n => ({
-                ...n,
-                children: entriesToNodes(entries, n.depth + 1),
-              }))
-            );
+            setNodes(current => updateNode(current, path, n => ({
+              ...n, children: entriesToNodes(entries, n.depth + 1),
+            })));
           });
           return next;
-        } else {
-          // 既にロード済み — 展開するだけ
-          return updateNode(prev, path, n => ({ ...n, expanded: true }));
         }
+        return updateNode(prev, path, n => ({ ...n, expanded: true }));
       }
     });
   }, [updateNode]);
@@ -230,13 +212,12 @@ export function FileTree({ rootDir, onSelectFile, onOpenFolder, selectedPath = n
 
   if (!rootDir) {
     return (
-      <div style={{ padding: 16 }}>
+      <div style={{ padding: tokens.space.lg }}>
         <div style={{
-          marginBottom: 12,
-          color: '#58a6ff',
-          fontWeight: 700,
-          fontSize: 14,
-          letterSpacing: '0.02em',
+          marginBottom: tokens.space.md,
+          color: tokens.color.text.secondary,
+          fontWeight: tokens.font.weight.semibold,
+          fontSize: tokens.font.size.md,
         }}>
           技 Waza
         </div>
@@ -245,13 +226,14 @@ export function FileTree({ rootDir, onSelectFile, onOpenFolder, selectedPath = n
           onClick={onOpenFolder}
           style={{
             width: '100%',
-            padding: '8px 12px',
-            background: '#21262d',
-            border: '1px solid #30363d',
-            borderRadius: 6,
-            color: '#c9d1d9',
+            padding: `${tokens.space.sm}px ${tokens.space.md}px`,
+            background: tokens.color.bg.active,
+            border: `1px solid ${tokens.color.bg.border}`,
+            borderRadius: tokens.radius.md,
+            color: tokens.color.text.secondary,
             cursor: 'pointer',
-            fontSize: 13,
+            fontSize: tokens.font.size.sm,
+            textAlign: 'left',
           }}
         >
           📂 フォルダを開く
@@ -266,12 +248,8 @@ export function FileTree({ rootDir, onSelectFile, onOpenFolder, selectedPath = n
     <div style={{ userSelect: 'none' }}>
       {/* ヘッダー */}
       <div style={{
-        padding: '10px 12px',
-        borderBottom: '1px solid #21262d',
-        color: '#8b949e',
-        fontSize: 11,
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
+        padding: `${tokens.space.sm}px ${tokens.space.md}px`,
+        borderBottom: `1px solid ${tokens.color.bg.borderSub}`,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -281,15 +259,15 @@ export function FileTree({ rootDir, onSelectFile, onOpenFolder, selectedPath = n
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           flex: 1,
-          color: '#c9d1d9',
-          fontSize: 12,
-          fontWeight: 600,
+          color: tokens.color.text.primary,
+          fontSize: tokens.font.size.sm,
+          fontWeight: tokens.font.weight.semibold,
         }}>
           {dirName}
         </span>
         <span
           onClick={onOpenFolder}
-          style={{ cursor: 'pointer', opacity: 0.6, flexShrink: 0, fontSize: 14 }}
+          style={{ cursor: 'pointer', opacity: 0.5, flexShrink: 0, fontSize: 13 }}
           title="フォルダを変更"
         >
           📂
@@ -299,7 +277,11 @@ export function FileTree({ rootDir, onSelectFile, onOpenFolder, selectedPath = n
       {/* ツリー */}
       <div style={{ padding: '4px 0', overflowX: 'hidden' }}>
         {loading && (
-          <div style={{ padding: '8px 16px', color: '#484f58', fontSize: 12 }}>
+          <div style={{
+            padding: `${tokens.space.sm}px ${tokens.space.lg}px`,
+            color: tokens.color.text.tertiary,
+            fontSize: tokens.font.size.sm,
+          }}>
             読み込み中...
           </div>
         )}

@@ -1,14 +1,16 @@
 import { useState, useCallback, useRef } from 'react';
 import { ModelRouter } from '@waza/core';
-import { tokens } from './styles/tokens.js';
+import { useTheme } from './context/ThemeContext.js';
 import { TitleBar } from './components/layout/TitleBar.js';
-import { ActivityBar } from './components/layout/ActivityBar.js';
-import type { ActivityTab } from './components/layout/ActivityBar.js';
 import { Sidebar } from './components/layout/Sidebar.js';
+import type { ThreadGroup } from './components/layout/Sidebar.js';
+import { StatusBar } from './components/layout/StatusBar.js';
 import { TabBar } from './components/TabBar.js';
 import { Editor } from './components/Editor.js';
+import { WelcomeScreen } from './components/WelcomeScreen.js';
 import { AgentPanel } from './components/AgentPanel.js';
 import { Composer } from './components/Composer.js';
+import type { ModelId } from './components/Composer.js';
 import { MultiFileDiffView } from './components/MultiFileDiffView.js';
 import { useEditorTabs } from './hooks/useEditorTabs.js';
 import { DesktopAgentLoop } from './agent/loop.js';
@@ -23,28 +25,24 @@ interface LogEntry {
 const router = new ModelRouter();
 
 export function App(): JSX.Element {
-  const [activityTab, setActivityTab] = useState<ActivityTab>('files');
+  const { tokens } = useTheme();
+
   const [rootDir, setRootDir] = useState<string | null>(null);
   const [agentLog, setAgentLog] = useState<LogEntry[]>([]);
   const [currentState, setCurrentState] = useState<AgentState>({ status: 'idle' });
   const [pendingEdit, setPendingEdit] = useState<MultiFileEdit | null>(null);
-  const [currentModel] = useState('auto');
+  const [threadName, setThreadName] = useState<string | null>(null);
   const [showAgentPanel, setShowAgentPanel] = useState(false);
 
-  const agentLoopRef = useRef<DesktopAgentLoop>(
-    new DesktopAgentLoop(router, '')
-  );
+  // スレッドグループ (MVP: 空 = ファイルツリーモード)
+  const [threadGroups] = useState<ThreadGroup[]>([]);
+  const [activeThreadId] = useState<string | null>(null);
+
+  const agentLoopRef = useRef<DesktopAgentLoop>(new DesktopAgentLoop(router, ''));
 
   const {
-    tabs,
-    activeTab,
-    activeTabId,
-    openTab,
-    closeTab,
-    updateContent,
-    saveTab,
-    applyMultiFileEdit,
-    setActiveTabId,
+    tabs, activeTab, activeTabId,
+    openTab, closeTab, updateContent, saveTab, applyMultiFileEdit, setActiveTabId,
   } = useEditorTabs();
 
   const handleOpenFolder = useCallback(async (): Promise<void> => {
@@ -55,8 +53,9 @@ export function App(): JSX.Element {
     }
   }, []);
 
-  const handleSubmit = useCallback(async (input: string): Promise<void> => {
-    // ユーザーメッセージをログに追加
+  const handleSubmit = useCallback(async (input: string, _modelId: ModelId): Promise<void> => {
+    // スレッド名設定（最初の40文字）
+    setThreadName(input.length > 40 ? input.slice(0, 40) + '...' : input);
     setAgentLog(prev => [...prev, { role: 'user', content: input }]);
     setCurrentState({ status: 'thinking', step: 0, message: '考え中...' });
     setShowAgentPanel(true);
@@ -64,7 +63,6 @@ export function App(): JSX.Element {
     const loop = agentLoopRef.current;
     const unsubscribe = loop.onStateChange((state: AgentState) => {
       setCurrentState(state);
-
       if (state.status === 'done') {
         setAgentLog(prev => [...prev, { role: 'assistant', content: state.result }]);
         unsubscribe();
@@ -79,7 +77,6 @@ export function App(): JSX.Element {
         setCurrentState({ status: 'idle' });
       }
     });
-
     await loop.run(input);
   }, []);
 
@@ -87,27 +84,26 @@ export function App(): JSX.Element {
     agentLoopRef.current.stop();
   }, []);
 
-  const handleSelectModel = useCallback((): void => {
-    // 将来: モデル選択モーダル
-    console.log('[Waza] model select requested');
+  const handleNewThread = useCallback((): void => {
+    setAgentLog([]);
+    setCurrentState({ status: 'idle' });
+    setThreadName(null);
+    setShowAgentPanel(false);
   }, []);
 
-  // MultiFileEdit Accept/Reject
+  // MultiFileEdit ハンドラ
   const handleAcceptAll = useCallback(async (): Promise<void> => {
     if (!pendingEdit) return;
     await applyMultiFileEdit(pendingEdit);
     setPendingEdit(null);
   }, [pendingEdit, applyMultiFileEdit]);
 
-  const handleRejectAll = useCallback((): void => {
-    setPendingEdit(null);
-  }, []);
+  const handleRejectAll = useCallback((): void => setPendingEdit(null), []);
 
   const handleAcceptFile = useCallback(async (path: string): Promise<void> => {
     if (!pendingEdit) return;
     const file = pendingEdit.files.find(f => f.path === path);
-    if (!file) return;
-    await applyMultiFileEdit({ ...pendingEdit, files: [file] });
+    if (file) await applyMultiFileEdit({ ...pendingEdit, files: [file] });
     const remaining = pendingEdit.files.filter(f => f.path !== path);
     setPendingEdit(remaining.length > 0 ? { ...pendingEdit, files: remaining } : null);
   }, [pendingEdit, applyMultiFileEdit]);
@@ -133,24 +129,21 @@ export function App(): JSX.Element {
       overflow: 'hidden',
     }}>
       {/* TitleBar */}
-      <TitleBar projectName={rootDir?.split('/').pop() ?? null} />
+      <TitleBar threadName={threadName} />
 
-      {/* メインレイアウト */}
+      {/* メインボディ */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-        {/* ActivityBar (48px) */}
-        <ActivityBar
-          activeTab={activityTab}
-          onTabChange={setActivityTab}
-        />
-
-        {/* Sidebar (240px) */}
+        {/* Sidebar (260px) — ActivityBar廃止 */}
         <Sidebar
-          activeTab={activityTab}
           rootDir={rootDir}
-          onSelectFile={openTab}
           onOpenFolder={handleOpenFolder}
+          onSelectFile={openTab}
           selectedPath={activeTab?.path ?? null}
+          threadGroups={threadGroups}
+          activeThreadId={activeThreadId}
+          onSelectThread={() => {}}
+          onNewThread={handleNewThread}
         />
 
         {/* MainArea */}
@@ -160,34 +153,44 @@ export function App(): JSX.Element {
           flexDirection: 'column',
           overflow: 'hidden',
           minWidth: 0,
+          background: tokens.color.bg.base,
         }}>
-          {/* TabBar */}
-          <TabBar
-            tabs={tabs}
-            activeTabId={activeTabId}
-            onSelect={setActiveTabId}
-            onClose={closeTab}
-          />
+          {/* TabBar（タブがある場合のみ） */}
+          {tabs.length > 0 && (
+            <TabBar
+              tabs={tabs}
+              activeTabId={activeTabId}
+              onSelect={setActiveTabId}
+              onClose={closeTab}
+            />
+          )}
 
-          {/* エディタ + AgentPanel（横並び） */}
+          {/* コンテンツエリア */}
           <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-            {/* Monaco エディタ */}
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              <Editor
-                tab={activeTab}
-                onChange={updateContent}
-                onSave={saveTab}
-              />
+            {/* エディタ or WelcomeScreen */}
+            <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+              {activeTab ? (
+                <Editor
+                  tab={activeTab}
+                  onChange={updateContent}
+                  onSave={saveTab}
+                />
+              ) : (
+                <WelcomeScreen
+                  projectName={rootDir?.split('/').pop() ?? null}
+                  onOpenFolder={handleOpenFolder}
+                />
+              )}
             </div>
 
-            {/* AgentPanel（実行中 or ログあり の場合のみ表示） */}
+            {/* AgentPanel（実行中 or ログあり の場合のみ） */}
             {showAgentPanel && (
               <div style={{
-                width: 320,
+                width: 300,
                 flexShrink: 0,
                 borderLeft: `1px solid ${tokens.color.bg.border}`,
-                background: tokens.color.bg.surface,
+                background: tokens.color.bg.sidebar,
                 display: 'flex',
                 flexDirection: 'column',
               }}>
@@ -205,7 +208,7 @@ export function App(): JSX.Element {
                     fontSize: tokens.font.size.xs,
                     fontWeight: tokens.font.weight.semibold,
                     color: tokens.color.text.tertiary,
-                    letterSpacing: '0.06em',
+                    letterSpacing: '0.05em',
                     textTransform: 'uppercase',
                   }}>
                     Agent
@@ -217,11 +220,10 @@ export function App(): JSX.Element {
                       fontSize: 14,
                       color: tokens.color.text.tertiary,
                       padding: `0 ${tokens.space.xs}px`,
-                      background: 'transparent',
                       transition: `color ${tokens.transition.fast}`,
                     }}
                     onMouseEnter={e => {
-                      (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.secondary;
+                      (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.primary;
                     }}
                     onMouseLeave={e => {
                       (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.tertiary;
@@ -236,25 +238,36 @@ export function App(): JSX.Element {
             )}
           </div>
 
-          {/* MultiFileDiff（保留中変更がある場合） */}
+          {/* MultiFileDiff */}
           {pendingEdit && pendingEdit.files.length > 0 && (
-            <MultiFileDiffView
-              edit={pendingEdit}
-              onAcceptAll={handleAcceptAll}
-              onRejectAll={handleRejectAll}
-              onAcceptFile={handleAcceptFile}
-              onRejectFile={handleRejectFile}
-            />
+            <div style={{
+              borderTop: `1px solid ${tokens.color.bg.border}`,
+              maxHeight: 260,
+              overflow: 'auto',
+            }}>
+              <MultiFileDiffView
+                edit={pendingEdit}
+                onAcceptAll={handleAcceptAll}
+                onRejectAll={handleRejectAll}
+                onAcceptFile={handleAcceptFile}
+                onRejectFile={handleRejectFile}
+              />
+            </div>
           )}
 
-          {/* Composer（下部固定） */}
+          {/* Composer */}
           <Composer
             currentFile={activeTab?.path ?? null}
             running={isRunning}
-            onSubmit={input => { void handleSubmit(input); }}
+            onSubmit={input => { void handleSubmit(input, 'auto'); }}
             onStop={handleStop}
-            currentModel={currentModel}
-            onSelectModel={handleSelectModel}
+          />
+
+          {/* StatusBar */}
+          <StatusBar
+            mode="local"
+            branch={null}
+            projectPath={rootDir}
           />
         </div>
       </div>

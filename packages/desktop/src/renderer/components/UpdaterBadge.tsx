@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext.js';
 
 type UpdaterStatusType =
   | { type: 'idle' }
@@ -10,12 +11,11 @@ type UpdaterStatusType =
   | { type: 'error'; message: string };
 
 export function UpdaterBadge(): JSX.Element | null {
+  const { tokens } = useTheme();
   const [status, setStatus] = useState<UpdaterStatusType>({ type: 'idle' });
 
   useEffect(() => {
-    // updater APIが未実装の環境（開発等）では何もしない
     if (!window.wazaAPI?.updater) return;
-
     const unsubscribe = window.wazaAPI.updater.onStatus(s => {
       setStatus(s as UpdaterStatusType);
       if (s.type === 'error') console.error('[updater]', s.message);
@@ -23,7 +23,6 @@ export function UpdaterBadge(): JSX.Element | null {
     return unsubscribe;
   }, []);
 
-  // idle / checking / not-available / error → 何も表示しない
   if (
     status.type === 'idle' ||
     status.type === 'checking' ||
@@ -33,18 +32,17 @@ export function UpdaterBadge(): JSX.Element | null {
     return null;
   }
 
-  // アップデート利用可能
   if (status.type === 'available') {
     return (
       <button
         id="updater-download-btn"
         onClick={() => void window.wazaAPI.updater.downloadUpdate()}
         style={{
-          fontSize: 11,
-          padding: '3px 10px',
-          background: '#1f6feb',
+          fontSize: tokens.font.size.xs,
+          padding: `3px ${tokens.space.sm}px`,
+          background: tokens.color.accent.blue,
           border: 'none',
-          borderRadius: 4,
+          borderRadius: tokens.radius.sm,
           color: '#fff',
           cursor: 'pointer',
           whiteSpace: 'nowrap',
@@ -55,27 +53,26 @@ export function UpdaterBadge(): JSX.Element | null {
     );
   }
 
-  // ダウンロード中
   if (status.type === 'downloading') {
     return (
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
-        fontSize: 11,
-        color: '#8b949e',
+        gap: tokens.space.xs,
+        fontSize: tokens.font.size.xs,
+        color: tokens.color.text.tertiary,
       }}>
         <div style={{
-          width: 72,
-          height: 4,
-          background: '#21262d',
+          width: 60,
+          height: 3,
+          background: tokens.color.bg.border,
           borderRadius: 2,
           overflow: 'hidden',
         }}>
           <div style={{
             height: '100%',
             width: `${status.percent}%`,
-            background: '#1f6feb',
+            background: tokens.color.accent.blue,
             transition: 'width 0.3s ease',
           }} />
         </div>
@@ -84,18 +81,17 @@ export function UpdaterBadge(): JSX.Element | null {
     );
   }
 
-  // ダウンロード完了
   if (status.type === 'downloaded') {
     return (
       <button
         id="updater-install-btn"
         onClick={() => window.wazaAPI.updater.quitAndInstall()}
         style={{
-          fontSize: 11,
-          padding: '3px 10px',
-          background: '#238636',
+          fontSize: tokens.font.size.xs,
+          padding: `3px ${tokens.space.sm}px`,
+          background: tokens.color.accent.green,
           border: 'none',
-          borderRadius: 4,
+          borderRadius: tokens.radius.sm,
           color: '#fff',
           cursor: 'pointer',
           whiteSpace: 'nowrap',

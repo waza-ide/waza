@@ -3,6 +3,33 @@
 All notable changes to Waza will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-04-19
+
+### Changed (Desktop)
+- **Complete UI redesign matching Codex app**
+  - Light/dark theme with OS auto-detection (`prefers-color-scheme`) + manual toggle
+  - `TitleBar`: thread name + theme toggle button (○/●)
+  - `Sidebar` (260px): New thread / Automations / Skills nav + Thread groups + FileTree fallback
+  - `WelcomeScreen`: "Let's build" + folder selector (replaces empty state)
+  - `Composer`: Inline model picker dropdown (auto/cocoro/Llama/Claude/Gemini)
+  - `StatusBar`: Local | Worktree | Cloud + branch display
+  - **Removed ActivityBar** (48px icon column)
+- **Design token system split**: `lightTokens` / `darkTokens` / `staticTokens`
+- **ThemeContext** (`useTheme()` hook): OS-aware init, `body[data-theme]` attribute
+
+### Added (Desktop)
+- `context/ThemeContext.tsx` — ThemeProvider + useTheme hook
+- `components/WelcomeScreen.tsx` — "Let's build" landing
+- `components/layout/StatusBar.tsx` — Codex-style status bar
+- All components migrated to `useTheme()`: FileTree, TabBar, Editor, AgentPanel,
+  MultiFileDiffView, UpdaterBadge, Composer, Sidebar, TitleBar
+- Monaco Editor theme switches between `vs` (light) and `vs-dark` (dark)
+- `layout.test.ts` expanded: 31 tests (lightTokens/darkTokens/staticTokens/Theme logic/
+  AVAILABLE_MODELS/WelcomeScreen/StatusBar/detectLanguage)
+
+### Fixed
+- global.css: `body[data-theme="dark"]` scoped scrollbar/selection/focus-ring styles
+
 ## [0.4.0] - 2026-04-19
 
 ### Changed (Desktop)
