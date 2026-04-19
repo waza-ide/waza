@@ -1,16 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { parseModelResponse } from '../renderer/agent/loop.js';
+import { useTaskStore } from '../renderer/stores/taskStore.js';
 
 describe('parseModelResponse', () => {
-  it('DONE: で始まる行を done としてパースする', () => {
-    const result = parseModelResponse('DONE: タスク完了しました');
+  it('parses a DONE: line as done', () => {
+    const result = parseModelResponse('DONE: task complete');
     expect(result.type).toBe('done');
     if (result.type === 'done') {
-      expect(result.result).toBe('タスク完了しました');
+      expect(result.result).toBe('task complete');
     }
   });
 
-  it('TOOL: で始まる行をツール呼び出しとしてパースする', () => {
+  it('parses a TOOL: line as a tool call', () => {
     const result = parseModelResponse('TOOL: read_file {"path": "src/index.ts"}');
     expect(result.type).toBe('tool');
     if (result.type === 'tool') {
@@ -19,7 +20,7 @@ describe('parseModelResponse', () => {
     }
   });
 
-  it('TOOL: exec_command をパースする', () => {
+  it('parses exec_command tool call', () => {
     const result = parseModelResponse('TOOL: exec_command {"command": "ls -la"}');
     expect(result.type).toBe('tool');
     if (result.type === 'tool') {
@@ -28,60 +29,66 @@ describe('parseModelResponse', () => {
     }
   });
 
-  it('JSON不正なTOOL行はスキップしてテキストとして扱う', () => {
+  it('treats invalid TOOL JSON as text', () => {
     const result = parseModelResponse('TOOL: read_file INVALID_JSON');
     expect(result.type).toBe('text');
   });
 
-  it('通常テキストは text としてパースする', () => {
-    const result = parseModelResponse('これは普通の回答です。');
+  it('treats plain text as text response', () => {
+    const result = parseModelResponse('This is a plain answer.');
     expect(result.type).toBe('text');
     if (result.type === 'text') {
-      expect(result.content).toContain('普通の回答');
+      expect(result.content).toContain('plain answer');
     }
   });
 
-  it('複数行のうちDONE:行を検出する', () => {
-    const result = parseModelResponse('考え中...\nDONE: 完了');
+  it('detects DONE: line among multiple lines', () => {
+    const result = parseModelResponse('Thinking...\nDONE: finished');
     expect(result.type).toBe('done');
+  });
+
+  it('parses write_file tool args correctly', () => {
+    const result = parseModelResponse('TOOL: write_file {"path": "out.ts", "content": "hello"}');
+    expect(result.type).toBe('tool');
+    if (result.type === 'tool') {
+      expect(result.tool).toBe('write_file');
+      expect((result.args as { content: string }).content).toBe('hello');
+    }
+  });
+
+  it('returns text when no TOOL: or DONE: found', () => {
+    const result = parseModelResponse('Just some explanation with no special markers.');
+    expect(result.type).toBe('text');
   });
 });
 
-describe('DesktopAgentLoop', () => {
-  it('二重実行を防ぐ（isRunning が true の間は run() が早期リターン）', async () => {
-    // ModelRouterのモック
-    const mockRouter = {
-      route: () => Promise.resolve({
-        complete: () => new Promise(() => {}), // 無限待機
-        model: 'test',
-      }),
-    };
-
-    // DesktopAgentLoopはwindow.wazaAPIに依存するためrerendererテストは省略
-    // parseModelResponseのユニットテストで代用
-    expect(true).toBe(true);
+describe('DesktopAgentLoop — taskStore integration', () => {
+  beforeEach(() => {
+    useTaskStore.getState().clearTasks();
   });
 
-  it('onStateChange ハンドラーが解除関数を返す', () => {
-    // 型チェックのみ（ブラウザAPI依存のため統合テストはE2Eで実施）
-    const handlerCalls: string[] = [];
+  it('store starts empty after clearTasks', () => {
+    expect(Object.keys(useTaskStore.getState().tasks)).toHaveLength(0);
+  });
+
+  it('onStateChange handler returns an unsubscribe function', () => {
+    const calls: string[] = [];
     const handlers: Array<(s: string) => void> = [];
 
-    function onStateChange(handler: (s: string) => void): () => void {
-      handlers.push(handler);
+    function onStateChange(h: (s: string) => void): () => void {
+      handlers.push(h);
       return () => {
-        const idx = handlers.indexOf(handler);
-        if (idx !== -1) handlers.splice(idx, 1);
+        const i = handlers.indexOf(h);
+        if (i !== -1) handlers.splice(i, 1);
       };
     }
 
-    const unsub = onStateChange(s => handlerCalls.push(s));
+    const unsub = onStateChange(s => calls.push(s));
     handlers.forEach(h => h('thinking'));
-    expect(handlerCalls).toEqual(['thinking']);
+    expect(calls).toEqual(['thinking']);
 
     unsub();
     handlers.forEach(h => h('done'));
-    // unsubscribeされているので追加されない
-    expect(handlerCalls).toHaveLength(1);
+    expect(calls).toHaveLength(1); // no new entry after unsub
   });
 });
