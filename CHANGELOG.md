@@ -3,6 +3,31 @@
 All notable changes to Waza will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-04-19
+
+### Changed (Desktop)
+- **UI Complete Redesign**: Codex-inspired layout
+  - ActivityBar (48px) + Sidebar (240px) + MainArea (flex) structure
+  - TitleBar (36px) with drag region + UpdaterBadge
+  - Dark theme: `#0a0a0a` base, Inter font
+- **Design Token System**: `styles/tokens.ts` — color/space/font/layout/radius/transition
+- **Global CSS**: `styles/global.css` — custom scrollbar, selection, focus ring, animations
+
+### Added (Desktop)
+- `components/layout/TitleBar.tsx` — drag-region, project name, UpdaterBadge
+- `components/layout/ActivityBar.tsx` — Files/Agent (enabled) + Search/Git/Settings (disabled)
+- `components/layout/Sidebar.tsx` — tab-based content switcher (FileTree ↔ AgentHistory)
+- `components/AgentHistory.tsx` — agent conversation history list
+- `components/AgentPanel.tsx` — real-time agent log + animation dots + status badges
+- `components/Composer.tsx` — Codex-style input with model selector + send/stop
+- `src/__tests__/layout.test.ts` — 19 tests for token structure and UI logic
+
+### Removed (Desktop)
+- `WazaSidebar.tsx` usage from App.tsx (replaced by AgentPanel + Composer)
+
+### Fixed
+- `@import` moved to top of `global.css` (CSS spec compliance)
+
 ## [0.3.0] - 2026-04-19
 
 ### Added

@@ -2,35 +2,35 @@ import MonacoEditor from '@monaco-editor/react';
 import { useEffect, useRef, useState } from 'react';
 import type * as Monaco from 'monaco-editor';
 import { detectLanguage } from '../hooks/useEditorTabs.js';
-
-interface OpenFile {
-  path: string;
-  content: string;
-}
+import { tokens } from '../styles/tokens.js';
+import type { EditorTab } from '../types/editor.js';
 
 interface EditorProps {
-  file: OpenFile | null;
-  onSave: () => Promise<void>;
-  onChange?: (content: string) => void;
+  tab: EditorTab | null;
+  onChange: (id: string, content: string) => void;
+  onSave: (id: string) => Promise<void>;
 }
 
-export function Editor({ file, onSave, onChange }: EditorProps): JSX.Element {
+export function Editor({ tab, onChange, onSave }: EditorProps): JSX.Element {
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const onSaveRef = useRef(onSave);
   onSaveRef.current = onSave;
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
 
   // Ctrl+S / Cmd+S で保存
   useEffect(() => {
     async function handleKeyDown(e: KeyboardEvent): Promise<void> {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        if (!file) return;
+        const currentTab = tabRef.current;
+        if (!currentTab) return;
         setSaving(true);
         setSaved(false);
         try {
-          await onSaveRef.current();
+          await onSaveRef.current(currentTab.id);
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);
         } finally {
@@ -40,23 +40,23 @@ export function Editor({ file, onSave, onChange }: EditorProps): JSX.Element {
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [file]);
+  }, []);
 
-  if (!file) {
+  if (!tab) {
     return (
       <div style={{
         height: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#484f58',
+        color: tokens.color.text.tertiary,
         flexDirection: 'column',
-        gap: 12,
-        background: '#0d1117',
+        gap: tokens.space.md,
+        background: tokens.color.bg.base,
       }}>
-        <span style={{ fontSize: 48, opacity: 0.3 }}>技</span>
-        <span style={{ fontSize: 14 }}>ファイルを選択してください</span>
-        <span style={{ fontSize: 12, opacity: 0.5 }}>左のツリーからファイルをクリック</span>
+        <span style={{ fontSize: 48, opacity: 0.1 }}>技</span>
+        <span style={{ fontSize: tokens.font.size.base }}>ファイルを選択してください</span>
+        <span style={{ fontSize: tokens.font.size.sm, opacity: 0.6 }}>←  ツリーからファイルをクリック</span>
       </div>
     );
   }
@@ -69,12 +69,13 @@ export function Editor({ file, onSave, onChange }: EditorProps): JSX.Element {
           position: 'absolute',
           top: 8,
           right: 16,
-          fontSize: 11,
-          color: saved ? '#3fb950' : '#8b949e',
+          fontSize: tokens.font.size.xs,
+          color: saved ? tokens.color.accent.green : tokens.color.text.tertiary,
           zIndex: 10,
-          background: '#0d1117',
-          padding: '2px 6px',
-          borderRadius: 4,
+          background: tokens.color.bg.surface,
+          padding: `${tokens.space.xs}px ${tokens.space.sm}px`,
+          borderRadius: tokens.radius.sm,
+          border: `1px solid ${tokens.color.bg.border}`,
         }}>
           {saving ? '保存中...' : '✓ 保存完了'}
         </div>
@@ -84,13 +85,13 @@ export function Editor({ file, onSave, onChange }: EditorProps): JSX.Element {
       <MonacoEditor
         height="100%"
         theme="vs-dark"
-        language={detectLanguage(file.path)}
-        value={file.content}
+        language={detectLanguage(tab.path)}
+        value={tab.content}
         onMount={editor => { editorRef.current = editor; }}
-        onChange={value => onChange?.(value ?? '')}
+        onChange={value => onChange(tab.id, value ?? '')}
         options={{
           fontSize: 14,
-          fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace',
+          fontFamily: tokens.font.mono,
           fontLigatures: true,
           minimap: { enabled: true },
           scrollBeyondLastLine: false,
@@ -101,6 +102,7 @@ export function Editor({ file, onSave, onChange }: EditorProps): JSX.Element {
           cursorBlinking: 'smooth',
           cursorSmoothCaretAnimation: 'on',
           bracketPairColorization: { enabled: true },
+          padding: { top: 8 },
         }}
       />
     </div>
