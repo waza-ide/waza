@@ -9,6 +9,7 @@ function makeTask(id = 'task-1'): Task {
     id,
     type: 'thread',
     title: 'Test task',
+    userInput: 'Test task input',
     status: 'pending',
     skills: [],
     steps: [],

@@ -12,6 +12,7 @@ const makeTask = (overrides: Partial<Task> = {}): Task => ({
   id:        'task-1',
   type:      'thread',
   title:     'Test task',
+  userInput: 'Test task input',
   status:    'pending',
   skills:    [],
   steps:     [],

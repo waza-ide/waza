@@ -15,6 +15,8 @@ export interface Task {
   id:        string;
   type:      TaskType;
   title:     string;
+  /** Original user input text (displayed in AgentPanelV2) */
+  userInput: string;
   status:    TaskStatus;
   /** Skill IDs to inject into the system prompt */
   skills:    string[];

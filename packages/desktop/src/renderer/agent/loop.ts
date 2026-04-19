@@ -155,6 +155,7 @@ export class DesktopAgentLoop {
       id:        taskId,
       type:      'thread',
       title:     userInput.length > 60 ? userInput.slice(0, 60) + '…' : userInput,
+      userInput,
       status:    'running',
       skills:    [],
       steps:     [],

@@ -274,7 +274,8 @@ export function AgentPanelV2(): JSX.Element {
               }}>
                 <span style={{ color: tokens.color.accent.amber }}>▸</span>
                 <span style={{ fontWeight: 600 }}>{action.type}</span>
-                {action.path && <span style={{ color: tokens.color.text.tertiary }}>· {action.path}</span>}
+                {'path' in action && <span style={{ color: tokens.color.text.tertiary }}>· {action.path}</span>}
+                {'command' in action && <span style={{ color: tokens.color.text.tertiary }}>· {action.command}</span>}
               </div>
             ))}
 

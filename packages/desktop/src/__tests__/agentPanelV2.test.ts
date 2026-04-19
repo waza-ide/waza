@@ -14,8 +14,11 @@ import type { Task } from '@waza/core';
 function makeTask(id = 'task-v2', status: Task['status'] = 'running'): Task {
   return {
     id,
+    type: 'thread',
+    title: 'Write a sorting algorithm',
     userInput: 'Write a sorting algorithm',
     status,
+    skills: [],
     steps: [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
