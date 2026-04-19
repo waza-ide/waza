@@ -2,7 +2,7 @@
 
 ## 最終更新
 - 日時: 2026-04-19
-- 担当エージェント: Antigravity (Phase 10: v0.4.0 Codex風UIリデザイン)
+- 担当エージェント: Antigravity (Phase 11: v0.5.0 ライト/ダークテーマ)
 
 ## 完了タスク
 - [Phase 1] モノレポ初期構造（CLAUDE.md / AGENTS.md / STRUCTURE.md / pnpm workspace）
@@ -61,7 +61,7 @@
   - commit: f116f65
 
 ## 次のタスク（候補）
-- Phase 10 完了 ✅ — v0.4.0 リリース済み (commit: 7c94dc1 / tag: v0.4.0)
+- Phase 11 完了 ✅ — v0.5.0 リリース済み (commit: 9a2f5e7 / tag: v0.5.0)
 - [Phase 10] Codex風UIリデザイン:
   - styles/tokens.ts (デザイントークン) / styles/global.css (グローバルリセット)
   - layout/TitleBar.tsx (drag-region) / layout/ActivityBar.tsx / layout/Sidebar.tsx
