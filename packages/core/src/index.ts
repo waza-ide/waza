@@ -39,6 +39,24 @@ export {
 export type { LogSink } from "./logging/logger.js";
 export { Logger, consoleSink, createCaptureSink } from "./logging/logger.js";
 
+// Codex Mode — Review Gateway (Phase 2)
+export {
+  requiresReview,
+  batchRequiresReview,
+  reviewReason,
+  DANGEROUS_SHELL_TOKENS,
+  DANGEROUS_GIT_SUBCOMMANDS,
+} from "./gateway/triggers.js";
+export type {
+  GatewayStatus,
+  ReviewRequest,
+  GatewayDecision,
+  ReviewHandler,
+} from "./gateway/gateway.js";
+export { ReviewGateway, assertValidTransition } from "./gateway/gateway.js";
+export type { DiffResult, DiffLine, DiffLineType } from "./gateway/diff.js";
+export { generateDiff, parseDiffLines } from "./gateway/diff.js";
+
 export { BaseProvider } from "./providers/base.js";
 export { ClaudeProvider } from "./providers/claude.js";
 export { GeminiProvider } from "./providers/gemini.js";

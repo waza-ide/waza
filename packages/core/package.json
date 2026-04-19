@@ -14,9 +14,11 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
-    "@google/generative-ai": "^0.24.1"
+    "@google/generative-ai": "^0.24.1",
+    "diff": "^9.0.0"
   },
   "devDependencies": {
+    "@types/diff": "^8.0.0",
     "vitest": "^1.4.0"
   }
 }

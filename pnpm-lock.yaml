@@ -45,7 +45,13 @@ importers:
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1
+      diff:
+        specifier: ^9.0.0
+        version: 9.0.0
     devDependencies:
+      '@types/diff':
+        specifier: ^8.0.0
+        version: 8.0.0
       vitest:
         specifier: ^1.4.0
         version: 1.6.1(@types/node@20.19.39)(happy-dom@20.9.0)

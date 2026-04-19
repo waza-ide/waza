@@ -1,15 +1,14 @@
 /**
- * DesktopAgentLoop — Codex Mode Phase 1 refactor
+ * DesktopAgentLoop — Codex Mode Phase 2 refactor
  *
- * Changes from v0.5.4:
- * - Each run() creates a Task in taskStore (via getState())
- * - Each LLM round creates a Step and emits structured LogEntry objects
- * - Tool dispatch logged to LogSource 'fs' / 'shell'
- * - AgentState events still emitted for backward-compat with AgentPanel.tsx
- *   (adapter pattern — removed in Phase 3)
+ * Changes from Phase 1:
+ * - ReviewGateway injected via constructor (testable, no React dep in this file)
+ * - write_file / delete_file / dangerous shell pass through Gateway before dispatch
+ * - Rejection triggers Auto-Fix Loop: re-prompts LLM with rejection context
+ * - generateDiff called before Gateway for write_file actions
  */
-import { CocoroCLMProvider, OllamaProvider, ModelRouter, Logger, createCaptureSink } from '@waza/core';
-import type { Task, Step, LogEntry, TaskAction } from '@waza/core';
+import { CocoroCLMProvider, OllamaProvider, ModelRouter, Logger, createCaptureSink, ReviewGateway, generateDiff } from '@waza/core';
+import type { Task, Step, LogEntry, TaskAction, ReviewHandler } from '@waza/core';
 import { useTaskStore } from '../stores/taskStore.js';
 import type { AgentState } from './types.js';
 
@@ -104,12 +103,23 @@ export class DesktopAgentLoop {
   private abortController: AbortController | undefined;
   private stateHandlers: StateChangeHandler[] = [];
   private currentWorkDir: string;
+  private gateway: ReviewGateway;
 
   constructor(
     private router: ModelRouter,
-    workDir: string
+    workDir: string,
+    reviewHandler?: ReviewHandler
   ) {
     this.currentWorkDir = workDir;
+    // Default handler: auto-approve (safe default; production sets a real UI handler)
+    const defaultHandler: ReviewHandler = () =>
+      Promise.resolve({ approved: true });
+    this.gateway = new ReviewGateway(reviewHandler ?? defaultHandler);
+  }
+
+  /** Swap the review handler at runtime (called by App.tsx once ReviewModal is mounted) */
+  setReviewHandler(handler: ReviewHandler): void {
+    this.gateway = new ReviewGateway(handler);
   }
 
   onStateChange(handler: StateChangeHandler): () => void {
@@ -229,6 +239,42 @@ export class DesktopAgentLoop {
         if (action) {
           store.appendAction(taskId, stepId, action);
           store.appendLog(taskId, stepId, logger.debug('fs', `Tool: ${action.type}`));
+        }
+
+        // ── Review Gateway (Phase 2) ──────────────────────────────────
+        if (action) {
+          // Pre-generate diff for write_file so ReviewModal can show it
+          let diff = '';
+          if (action.type === 'write_file') {
+            try {
+              const readFn = (p: string) => window.wazaAPI.fs.readFile(p);
+              const diffResult = await generateDiff(action.path, action.content, readFn);
+              diff = diffResult.patch;
+            } catch {
+              diff = ''; // diff generation failure is non-fatal
+            }
+          }
+
+          store.updateStepStatus(taskId, stepId, 'proposing');
+          this.gateway.reset();
+          const decision = await this.gateway.check(action, diff);
+
+          if (!decision.approved) {
+            // ── Auto-Fix Loop: re-inject rejection context into conversation ──
+            const rejectReason = decision.rejectionReason ?? 'User rejected the action.';
+            store.updateStepStatus(taskId, stepId, 'aborted');
+            const abortLog = logger.warn('system', `Action rejected: ${rejectReason}`);
+            store.appendLog(taskId, stepId, abortLog);
+
+            messages.push({ role: 'assistant', content: response.content });
+            messages.push({
+              role: 'user',
+              content: `[Review rejected] The action "${action.type}" was rejected by the user.\nReason: ${rejectReason}\nPlease reconsider and propose an alternative approach that avoids this action.`,
+            });
+            continue; // next step = Auto-Fix attempt
+          }
+
+          store.updateStepStatus(taskId, stepId, 'running');
         }
 
         let toolOutput: string;
