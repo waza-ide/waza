@@ -2,7 +2,7 @@
 
 ## 最終更新
 - 日時: 2026-04-19
-- 担当エージェント: Antigravity (Codex Mode Phase 5: **v1.0.0 MVP**)
+- 担当エージェント: Antigravity (LocalProvider + Skill injection: v1.0.1)
 
 ## Codex Mode 全フェーズ完了サマリー
 
@@ -12,31 +12,65 @@
 | Phase 2 | v0.7.0 | codex-mode/phase-2-gateway | Review Gateway (安全層) |
 | Phase 3 | v0.8.0 | codex-mode/phase-3-scheduler | 並列実行 / TaskQueue / IPC |
 | Phase 4 | v0.9.0 | codex-mode/phase-4-skill-automation | Skill / Automation / Telemetry |
-| **Phase 5** | **v1.0.0** | **codex-mode/phase-5-ui-integration** | **UI 統合 / MVP 完成** |
+| Phase 5 | v1.0.0 | codex-mode/phase-5-ui-integration | UI 統合 / MVP 完成 |
+| **LocalProvider** | **v1.0.1相当** | codex-mode/phase-5-ui-integration | cocoro-llm-server 本格統合 |
 
-## Phase 5 詳細 (v1.0.0 MVP)
-- branch: codex-mode/phase-5-ui-integration / tag: v1.0.0
-- **App.tsx** — ReviewModal を Promise ブリッジで接続 (`setReviewHandler()`)
-- **AgentPanelV2.tsx** — taskStore 直結 (Pause/Resume/Cancel/Retry 制御バー付き)
-- **SkillsPanel.tsx** — built-in 3 Skills + カスタム作成 + toggle 永続化
-- **TelemetryPanel.tsx** — 🟢/🔴 ドット / latency / 30s heartbeat
-- **SettingsContext.tsx** — `activeSkillIds[]` + `toggleSkill()` + `waza-settings-v2`
-- **SettingsPanel.tsx** — Skills / Telemetry セクション追加 (計 7 セクション)
-- テスト: agentPanelV2.test.ts (11 tests)
-- 合計: **333/333 pass** (core:190 / desktop:121 / extension:7 / bridge:10 / ui:5)
+## LocalProvider 詳細 (最新)
 
-## 残件 (v1.0.0 後の課題)
+### 接続情報
+| 項目 | 値 |
+|---|---|
+| エンドポイント | http://192.168.50.112:8000/v1 |
+| モデル名 | qwen25-72b（Qwen 2.5 72B Instruct AWQ）|
+| Bearer Token | 環境変数 WAZA_LOCAL_API_KEY 推奨 (/.vscode/settings.json は gitignore) |
+| ヘルスチェック | GET /v1/models (200 OK) |
+| タイムアウト | 120,000ms |
 
-### 短期 (v1.1.0)
-- AgentPanel.tsx の削除 (V2 安定後)
-- Skill を Task 実行時に実際に注入 (loop.ts `injectSkills()` 呼び出し)
-- task:update イベントで taskStore を自動更新する `applyPatch()` reducer 実装
-- Automation トリガーの実際実装 (node-cron / chokidar を Main process で起動)
+### 実装ファイル
+- **packages/core/src/providers/LocalProvider.ts** (NEW)
+  - `LocalProviderConfig`: baseUrl / apiKey / model / maxTokens / timeoutMs
+  - `isAvailable()`: GET /v1/models (3s timeout, Bearer auth)
+  - `complete()`: stream=false
+  - `stream()`: SSE (data: chunks + [DONE])
+  - `healthCheck()`: HealthCheckable実装
+- **packages/core/src/router/index.ts**
+  - `COCORO_CLM_MODEL`: gpt-4o → **qwen25-72b**
+  - `routeWithPreference(preferLocal, localConfig?, cloudApiKey?)`: preferLocal=true → LocalProvider → Claude fallback
+- **packages/extension/src/config.ts** (NEW)
+  - `readConfig()`: `waza.preferLocalModel` / `localModelUrl` / `localModel` / `localApiKey`
+  - 優先度: `WAZA_LOCAL_API_KEY` 環境変数 → VSCode設定
+- **packages/extension/src/router/index.ts**
+  - readConfig() + routeWithPreference() 連携
+- **packages/desktop/src/renderer/agent/loop.ts**
+  - `DEFAULT_SETTINGS.cocoroModel`: gpt-4o → **qwen25-72b**
+  - `LoopSettings.activeSkillIds?: string[]` 追加
+  - `buildSystemPrompt(activeSkillIds)`: `injectSkills()` 適用 (Skill injection E2E)
+  - `resolveAuto()`: /health → **/v1/models** (LocalProvider整合)
 
-### 中期 (v1.2.0)
-- TaskRunner.tick() + drain-loop での真の非同期スケジューリング
-- マルチタスク UI (タスク一覧サイドバー)
-- diff-based file change preview (ReviewModal → SkillsPanel 連携)
+### テスト
+- `packages/core/src/__tests__/LocalProvider.test.ts` (23 tests)
+- `packages/extension/src/__tests__/config.test.ts` (8 tests)
+- **合計: 364/364 tests passing**
+
+### VSCode 設定 (動作確認手順)
+```bash
+# .vscode/settings.json をコピーして API キーを設定
+cp .vscode/settings.json.example .vscode/settings.json
+# localApiKey にトークンを記入 (または環境変数で)
+export WAZA_LOCAL_API_KEY=mdl-llm-2026
+```
+
+## 残件 (次バージョン v1.1.0)
+
+### 短期
+1. **Automation Engine** — cron/file-watch イベントループを Main process で実装 (node-cron / chokidar)
+2. **task:update applyPatch()** — IPC push イベントで taskStore を自動更新するreducer
+3. **TaskRunner drain-loop** — queue の真の非同期スケジューリング
+4. **SkillsPanel カスタム Skill 永続化** — localStorage へ保存
+
+### 中期
+5. マルチタスク UI (タスク一覧サイドバー)
+6. extension/src/router → LocalProvider を直接インスタンス化 (不要な CocoroCLMProvider 依存を除去)
 
 ## 開発サーバー起動
 ```bash
@@ -50,12 +84,11 @@ cd packages/desktop && pnpm dev:renderer
 NODE_ENV=development pnpm -F @waza/desktop electron
 ```
 
-## 重要な注意事項
-- `packages/core/src/providers/base.ts` **FROZEN**
-- `packages/core/src/models/types.ts` **FROZEN**
-- `packages/extension/src/extension.ts` **FROZEN**
-- localStorage key: `waza-settings-v2` (v1 から変更済み)
+## 注意事項
+- **FROZEN**: base.ts / models/types.ts / extension.ts
+- **gitignore**: .vscode/settings.json (APIキー含む)
+- **qwen25-72b** が正式モデル名。gpt-4o / gpt-4o-mini は LiteLLM エイリアス (非推奨)
+- `WAZA_LOCAL_API_KEY` 環境変数が VSCode settings.localApiKey より優先
+- `isAvailable()` は GET /v1/models (not /health) を使用
 - pnpm: `~/.local/share/pnpm/pnpm` (PATH export 必須)
-- テスト実行前に `cd packages/core && pnpm build` を実行
-- ReviewModal は `@waza/core` の `ReviewRequest` / `GatewayDecision` 型を使用
-- SkillsPanel で作成したカスタム Skill は現状ページリロードで消える (localStorage 永続化は次フェーズ)
+- core build → test の順序を守ること
