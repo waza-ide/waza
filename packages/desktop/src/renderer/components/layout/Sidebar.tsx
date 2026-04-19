@@ -73,10 +73,8 @@ export function Sidebar({
 
   return (
     <div style={{
-      width: tokens.layout.sidebar,
-      flexShrink: 0,
+      flex: 1,
       background: tokens.color.bg.sidebar,
-      borderRight: `1px solid ${tokens.color.bg.border}`,
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',

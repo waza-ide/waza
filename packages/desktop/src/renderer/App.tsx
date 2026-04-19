@@ -168,113 +168,41 @@ export function App(): JSX.Element {
       {/* Main body */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-        {/* Sidebar */}
-        <Sidebar
-          rootDir={rootDir}
-          onOpenFolder={handleOpenFolder}
-          onSelectFile={openTab}
-          selectedPath={activeTab?.path ?? null}
-          threadGroups={threadGroups}
-          activeThreadId={activeThreadId}
-          onSelectThread={() => {}}
-          onNewThread={handleNewThread}
-        />
-
-        {/* Main content area */}
+        {/* Left column: Sidebar + Agent panel */}
         <div style={{
-          flex: 1,
+          width: tokens.layout.sidebar,
+          flexShrink: 0,
           display: 'flex',
+          flexDirection: 'column',
           overflow: 'hidden',
-          minWidth: 0,
+          background: tokens.color.bg.sidebar,
+          borderRight: `1px solid ${tokens.color.bg.border}`,
         }}>
-          {/* Editor column */}
-          <div style={{
-            flex: activeTab ? 1 : (showAgentPanel ? 1 : 1),
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            minWidth: 0,
-            background: tokens.color.bg.base,
-          }}>
-            {/* TabBar */}
-            {tabs.length > 0 && (
-              <TabBar
-                tabs={tabs}
-                activeTabId={activeTabId}
-                onSelect={setActiveTabId}
-                onClose={closeTab}
-              />
-            )}
+          {/* Sidebar — file tree & navigation */}
+          <Sidebar
+            rootDir={rootDir}
+            onOpenFolder={handleOpenFolder}
+            onSelectFile={openTab}
+            selectedPath={activeTab?.path ?? null}
+            threadGroups={threadGroups}
+            activeThreadId={activeThreadId}
+            onSelectThread={() => {}}
+            onNewThread={handleNewThread}
+          />
 
-            {/* Editor or Welcome */}
-            <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-              {activeTab ? (
-                <Editor
-                  tab={activeTab}
-                  onChange={updateContent}
-                  onSave={saveTab}
-                />
-              ) : (
-                <WelcomeScreen
-                  projectName={rootDir?.split('/').pop() ?? null}
-                  onOpenFolder={handleOpenFolder}
-                />
-              )}
-            </div>
-
-            {/* Multi-file diff */}
-            {pendingEdit && pendingEdit.files.length > 0 && (
-              <div style={{
-                borderTop: `1px solid ${tokens.color.bg.border}`,
-                maxHeight: 260,
-                overflow: 'auto',
-                flexShrink: 0,
-              }}>
-                <MultiFileDiffView
-                  edit={pendingEdit}
-                  onAcceptAll={handleAcceptAll}
-                  onRejectAll={handleRejectAll}
-                  onAcceptFile={handleAcceptFile}
-                  onRejectFile={handleRejectFile}
-                />
-              </div>
-            )}
-
-            {/* Composer — fixed at bottom of main column */}
-            <div style={{
-              borderTop: `1px solid ${tokens.color.bg.border}`,
-              flexShrink: 0,
-            }}>
-              <Composer
-                currentFile={activeTab?.path ?? null}
-                running={isRunning}
-                onSubmit={(input, modelId) => { void handleSubmit(input, modelId); }}
-                onStop={handleStop}
-              />
-            </div>
-
-            {/* StatusBar */}
-            <StatusBar
-              mode="local"
-              branch={null}
-              projectPath={rootDir}
-            />
-          </div>
-
-          {/* Agent panel — Codex-style right pane */}
+          {/* Agent panel — below sidebar, above nothing */}
           {showAgentPanel && (
             <div style={{
-              width: 320,
-              flexShrink: 0,
-              borderLeft: `1px solid ${tokens.color.bg.border}`,
-              background: tokens.color.bg.sidebar,
+              flex: 1,
+              borderTop: `1px solid ${tokens.color.bg.borderSub}`,
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
+              minHeight: 120,
             }}>
               {/* Panel header */}
               <div style={{
-                height: 36,
+                height: 28,
                 padding: `0 ${tokens.space.md}px`,
                 borderBottom: `1px solid ${tokens.color.bg.borderSub}`,
                 display: 'flex',
@@ -297,10 +225,13 @@ export function App(): JSX.Element {
                   title="Close panel"
                   style={{
                     color: tokens.color.text.tertiary,
-                    fontSize: 16,
+                    fontSize: 14,
                     lineHeight: 1,
                     padding: '2px 4px',
                     borderRadius: tokens.radius.sm,
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
                   }}
                   onMouseEnter={e => {
                     (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.primary;
@@ -315,11 +246,146 @@ export function App(): JSX.Element {
                 </button>
               </div>
 
-              {/* Agent panel — Codex-mode taskStore view */}
+              {/* Agent panel v2 — taskStore view */}
               <AgentPanelV2 />
             </div>
           )}
         </div>
+
+        {/* Center column: Editor + Composer */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minWidth: 0,
+          background: tokens.color.bg.base,
+        }}>
+          {/* TabBar */}
+          {tabs.length > 0 && (
+            <TabBar
+              tabs={tabs}
+              activeTabId={activeTabId}
+              onSelect={setActiveTabId}
+              onClose={closeTab}
+            />
+          )}
+
+          {/* Editor or Welcome */}
+          <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+            {activeTab ? (
+              <Editor
+                tab={activeTab}
+                onChange={updateContent}
+                onSave={saveTab}
+              />
+            ) : (
+              <WelcomeScreen
+                projectName={rootDir?.split('/').pop() ?? null}
+                onOpenFolder={handleOpenFolder}
+              />
+            )}
+          </div>
+
+          {/* Composer — fixed at bottom of main column */}
+          <div style={{
+            borderTop: `1px solid ${tokens.color.bg.border}`,
+            flexShrink: 0,
+          }}>
+            <Composer
+              currentFile={activeTab?.path ?? null}
+              running={isRunning}
+              onSubmit={(input, modelId) => { void handleSubmit(input, modelId); }}
+              onStop={handleStop}
+            />
+          </div>
+
+          {/* StatusBar */}
+          <StatusBar
+            mode="local"
+            branch={null}
+            projectPath={rootDir}
+          />
+        </div>
+
+        {/* Right column: Diff view — green/red code diff */}
+        {pendingEdit && pendingEdit.files.length > 0 && (
+          <div style={{
+            width: 420,
+            flexShrink: 0,
+            borderLeft: `1px solid ${tokens.color.bg.border}`,
+            background: tokens.color.bg.base,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}>
+            {/* Diff header */}
+            <div style={{
+              height: 36,
+              padding: `0 ${tokens.space.md}px`,
+              borderBottom: `1px solid ${tokens.color.bg.borderSub}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0,
+            }}>
+              <span style={{
+                fontSize: tokens.font.size.xs,
+                fontWeight: tokens.font.weight.semibold,
+                color: tokens.color.text.tertiary,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+              }}>
+                Changes
+              </span>
+              <div style={{ display: 'flex', gap: tokens.space.xs }}>
+                <button
+                  id="accept-all-btn"
+                  onClick={() => { void handleAcceptAll(); }}
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: tokens.radius.sm,
+                    border: `1px solid ${tokens.color.accent.green}44`,
+                    background: tokens.color.accent.green + '10',
+                    color: tokens.color.accent.green,
+                    fontSize: tokens.font.size.xs,
+                    cursor: 'pointer',
+                    fontFamily: tokens.font.sans,
+                  }}
+                >
+                  ✓ Accept All
+                </button>
+                <button
+                  id="reject-all-btn"
+                  onClick={handleRejectAll}
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: tokens.radius.sm,
+                    border: `1px solid ${tokens.color.accent.red}44`,
+                    background: tokens.color.accent.red + '10',
+                    color: tokens.color.accent.red,
+                    fontSize: tokens.font.size.xs,
+                    cursor: 'pointer',
+                    fontFamily: tokens.font.sans,
+                  }}
+                >
+                  ✗ Reject All
+                </button>
+              </div>
+            </div>
+
+            {/* Diff content — scrollable */}
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              <MultiFileDiffView
+                edit={pendingEdit}
+                onAcceptAll={handleAcceptAll}
+                onRejectAll={handleRejectAll}
+                onAcceptFile={handleAcceptFile}
+                onRejectFile={handleRejectFile}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
     {reviewRequest && resolveReview && (

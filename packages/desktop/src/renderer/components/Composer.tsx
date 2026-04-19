@@ -3,12 +3,12 @@ import { createPortal } from 'react-dom';
 import { useTheme } from '../context/ThemeContext.js';
 
 export const AVAILABLE_MODELS = [
-  { id: 'auto',              label: 'auto',             desc: 'Local-first auto select',    dot: null },
-  { id: 'cocoro',            label: 'cocoro-OS',        desc: 'Qwen 2.5 72B · Local GPU',  dot: '#22c55e' },
-  { id: 'ollama/llama3.2',   label: 'Llama 3.2',        desc: 'Ollama · Local',             dot: '#a78bfa' },
-  { id: 'claude-sonnet-4-6', label: 'Claude Sonnet',    desc: 'Anthropic · Cloud',          dot: '#f97316' },
-  { id: 'claude-opus-4-6',   label: 'Claude Opus',      desc: 'Anthropic · Cloud',          dot: '#f97316' },
-  { id: 'gemini-2.0-flash',  label: 'Gemini 2.0 Flash', desc: 'Google · Cloud',             dot: '#3b82f6' },
+  { id: 'auto',              label: 'auto',          desc: 'Local-first auto select',     dot: null },
+  { id: 'cocoro',            label: 'cocoro-OS',     desc: 'Qwen 2.5 72B AWQ · Local',   dot: '#22c55e' },
+  { id: 'ollama/llama3.2',   label: 'Ollama',        desc: 'Local CPU/GPU',               dot: '#a78bfa' },
+  { id: 'claude-sonnet-4-6', label: 'Claude Sonnet', desc: 'Anthropic · Cloud',           dot: '#f97316' },
+  { id: 'claude-opus-4-6',   label: 'Claude Opus',   desc: 'Anthropic · Cloud',           dot: '#f97316' },
+  { id: 'gemini-2.0-flash',  label: 'Gemini 2.0',    desc: 'Google · Cloud',              dot: '#3b82f6' },
 ] as const;
 
 export type ModelId = typeof AVAILABLE_MODELS[number]['id'];
@@ -33,7 +33,6 @@ interface DropdownPortalProps {
 function DropdownPortal({ anchorRef, open, onClose, children }: DropdownPortalProps): JSX.Element | null {
   const [rect, setRect] = useState<DOMRect | null>(null);
 
-  // Recalculate position every time it opens (including first launch)
   useEffect(() => {
     if (!open || !anchorRef.current) return;
 
@@ -44,7 +43,6 @@ function DropdownPortal({ anchorRef, open, onClose, children }: DropdownPortalPr
     }
     updateRect();
 
-    // Listen to scroll/resize in case window moves
     window.addEventListener('resize', updateRect);
     window.addEventListener('scroll', updateRect, true);
     return () => {
@@ -53,7 +51,6 @@ function DropdownPortal({ anchorRef, open, onClose, children }: DropdownPortalPr
     };
   }, [open, anchorRef]);
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     function handleMouseDown(e: MouseEvent): void {
@@ -91,7 +88,7 @@ function DropdownPortal({ anchorRef, open, onClose, children }: DropdownPortalPr
 }
 
 // ──────────────────────────────────────────
-// Main Composer
+// Main Composer — model selector at bottom, + button left of model
 // ──────────────────────────────────────────
 export function Composer({
   currentFile,
@@ -183,13 +180,67 @@ export function Composer({
           el.style.boxShadow = 'none';
         }}
       >
-        {/* TOP ROW: Model selector (Codex-style — shown at the top of input) */}
+        {/* Textarea — at the top */}
         <div style={{
-          padding: `${tokens.space.sm}px ${tokens.space.md}px ${tokens.space.xs}px`,
+          padding: `${tokens.space.sm}px ${tokens.space.md}px 0`,
+        }}>
+          <textarea
+            id="waza-input"
+            ref={textareaRef}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={running ? 'Running...' : 'Ask Waza…'}
+            disabled={running}
+            rows={1}
+            style={{
+              width: '100%',
+              minHeight: 28,
+              maxHeight: 200,
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              resize: 'none',
+              overflow: 'hidden',
+              color: running ? tokens.color.text.tertiary : tokens.color.text.primary,
+              fontSize: tokens.font.size.base,
+              fontFamily: tokens.font.sans,
+              lineHeight: 1.6,
+              cursor: running ? 'not-allowed' : 'text',
+            }}
+          />
+        </div>
+
+        {/* BOTTOM ROW: + button, model selector, send/stop */}
+        <div style={{
+          padding: `${tokens.space.xs}px ${tokens.space.md}px ${tokens.space.sm}px`,
           display: 'flex',
           alignItems: 'center',
           gap: tokens.space.xs,
         }}>
+          {/* Attach button — left of model selector */}
+          <button
+            id="composer-attach-btn"
+            title="Attach file (coming soon)"
+            disabled
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 22,
+              height: 22,
+              borderRadius: tokens.radius.full,
+              border: `1px solid ${tokens.color.bg.border}`,
+              color: tokens.color.text.tertiary,
+              fontSize: 14,
+              opacity: 0.4,
+              background: 'transparent',
+              cursor: 'not-allowed',
+            }}
+          >
+            +
+          </button>
+
           {/* Model pill button */}
           <button
             id="model-select-btn"
@@ -234,67 +285,10 @@ export function Composer({
             <span style={{ opacity: 0.4, fontSize: 8, marginLeft: 1 }}>▾</span>
           </button>
 
-          {/* Attach button */}
-          <button
-            id="composer-attach-btn"
-            title="Attach file (coming soon)"
-            disabled
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 22,
-              height: 22,
-              borderRadius: tokens.radius.full,
-              border: `1px solid ${tokens.color.bg.border}`,
-              color: tokens.color.text.tertiary,
-              fontSize: 14,
-              opacity: 0.4,
-              background: 'transparent',
-            }}
-          >
-            +
-          </button>
-        </div>
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
 
-        {/* Textarea */}
-        <div style={{
-          padding: `0 ${tokens.space.md}px`,
-        }}>
-          <textarea
-            id="waza-input"
-            ref={textareaRef}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={running ? 'Running...' : 'Ask Waza…'}
-            disabled={running}
-            rows={1}
-            style={{
-              width: '100%',
-              minHeight: 28,
-              maxHeight: 200,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              overflow: 'hidden',
-              color: running ? tokens.color.text.tertiary : tokens.color.text.primary,
-              fontSize: tokens.font.size.base,
-              fontFamily: tokens.font.sans,
-              lineHeight: 1.6,
-              cursor: running ? 'not-allowed' : 'text',
-            }}
-          />
-        </div>
-
-        {/* BOTTOM ROW: send/stop button */}
-        <div style={{
-          padding: `${tokens.space.xs}px ${tokens.space.md}px ${tokens.space.sm}px`,
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-        }}>
+          {/* Send / Stop button — right side */}
           {running ? (
             <button
               id="stop-agent-btn"

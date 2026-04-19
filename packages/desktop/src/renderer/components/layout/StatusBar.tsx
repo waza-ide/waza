@@ -122,7 +122,7 @@ export function StatusBar({ mode, branch }: StatusBarProps): JSX.Element {
             id="cocoro-status-btn"
             onClick={openSettings}
             title={
-              `cocoro-llm-server: ${cocoroStatus}\nClick to open Settings (⌘,)`
+              `LLM Status: ${cocoroStatus}\nClick to open Settings (⌘,)`
             }
             style={{
               display: 'inline-flex',
@@ -162,7 +162,7 @@ export function StatusBar({ mode, branch }: StatusBarProps): JSX.Element {
               flexShrink: 0,
             }} />
             <span style={{ opacity: cocoroStatus === 'online' ? 1 : 0.55 }}>
-              cocoro
+              Settings
             </span>
             {/* Settings gear hint */}
             <span style={{ opacity: 0.35, fontSize: 9, marginLeft: 1 }}>⚙</span>
