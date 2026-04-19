@@ -1,8 +1,8 @@
 {
   "name": "@waza/desktop",
-  "version": "0.5.4",
+  "version": "1.5.0",
   "private": true,
-  "description": "Waza — AI-powered IDE with Monaco editor and local agent support",
+  "description": "Waza \u2014 AI-powered IDE with Monaco editor and local agent support",
   "homepage": "https://github.com/waza-ide/waza",
   "author": {
     "name": "mdl-systems",

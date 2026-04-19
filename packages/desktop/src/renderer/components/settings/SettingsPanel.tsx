@@ -609,7 +609,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps): JSX.Elemen
                     color: tokens.color.text.tertiary,
                     marginTop: 2,
                   }}>
-                    Version 0.9.0 · mdl-systems
+                    Version 1.5.0 · mdl-systems
                   </div>
                 </div>
               </div>

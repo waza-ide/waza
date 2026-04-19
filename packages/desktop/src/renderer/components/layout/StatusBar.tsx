@@ -27,7 +27,7 @@ function useCocoroStatus() {
   useEffect(() => {
     async function check(): Promise<void> {
       try {
-        const res = await fetch(`${COCORO_CLM_URL}/health`, {
+        const res = await fetch(`${COCORO_CLM_URL}/v1/models`, {
           signal: AbortSignal.timeout(3000),
         });
         setStatus(res.ok ? 'online' : 'offline');
