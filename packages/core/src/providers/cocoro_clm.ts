@@ -18,6 +18,7 @@ import type {
   ProviderKind,
 } from "../models/types.js";
 import { BaseProvider } from "./base.js";
+import type { HealthCheckable, HealthCheckResult } from "./health.js";
 
 // OpenAI-compatible response types
 type OpenAIMessage = {
@@ -64,7 +65,7 @@ type OpenAIStreamChunk = {
  * Default base URL: http://192.168.50.112:8000/v1
  * Default model:    gpt-4o  (maps to Qwen 2.5 72B AWQ)
  */
-export class CocoroCLMProvider extends BaseProvider {
+export class CocoroCLMProvider extends BaseProvider implements HealthCheckable {
   constructor(config: ProviderConfig) {
     super(config);
   }
@@ -215,5 +216,16 @@ export class CocoroCLMProvider extends BaseProvider {
     }
 
     yield { delta: "", done: true };
+  }
+
+  async healthCheck(): Promise<HealthCheckResult> {
+    const url = `${this.config.baseUrl?.replace('/v1', '') ?? 'http://localhost:8000'}/health`;
+    const start = Date.now();
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+      return { ok: res.ok, latencyMs: Date.now() - start, detail: `HTTP ${res.status}` };
+    } catch {
+      return { ok: false, latencyMs: Date.now() - start };
+    }
   }
 }

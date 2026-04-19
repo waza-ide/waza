@@ -6,6 +6,7 @@ import type {
   ProviderKind,
 } from "../models/types.js";
 import { BaseProvider } from "./base.js";
+import type { HealthCheckable, HealthCheckResult } from "./health.js";
 
 type OllamaGenerateResponse = {
   model: string;
@@ -31,7 +32,7 @@ type OllamaChatResponse = {
 /**
  * Ollama プロバイダー実装（ローカルモデル向け）
  */
-export class OllamaProvider extends BaseProvider {
+export class OllamaProvider extends BaseProvider implements HealthCheckable {
   constructor(config: ProviderConfig) {
     super(config);
   }
@@ -137,5 +138,16 @@ export class OllamaProvider extends BaseProvider {
     }
 
     yield { delta: "", done: true };
+  }
+
+  async healthCheck(): Promise<HealthCheckResult> {
+    const base = this.config.baseUrl ?? 'http://localhost:11434';
+    const start = Date.now();
+    try {
+      const res = await fetch(`${base}/api/tags`, { signal: AbortSignal.timeout(3000) });
+      return { ok: res.ok, latencyMs: Date.now() - start, detail: `HTTP ${res.status}` };
+    } catch {
+      return { ok: false, latencyMs: Date.now() - start };
+    }
   }
 }

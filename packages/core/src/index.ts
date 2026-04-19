@@ -63,3 +63,23 @@ export { GeminiProvider } from "./providers/gemini.js";
 export { OllamaProvider } from "./providers/ollama.js";
 export { CocoroCLMProvider } from "./providers/cocoro_clm.js";
 export { ModelRouter } from "./router/index.js";
+
+// Codex Mode — Skill system (Phase 4)
+export type { Skill } from "./skill/types.js";
+export { buildSkillPrompt, injectSkills, BUILTIN_SKILLS } from "./skill/types.js";
+
+// Codex Mode — Automation system (Phase 4)
+export type {
+  Automation,
+  AutomationStatus,
+  AutomationTaskTemplate,
+  AutomationTrigger,
+  CronTrigger,
+  FileWatchTrigger,
+  GitHookTrigger,
+} from "./automation/types.js";
+export { renderAutomationPrompt } from "./automation/types.js";
+
+// Codex Mode — Model Telemetry (Phase 4)
+export type { HealthCheckResult, HealthCheckable, ProviderTelemetry } from "./providers/health.js";
+export { isHealthCheckable } from "./providers/health.js";
