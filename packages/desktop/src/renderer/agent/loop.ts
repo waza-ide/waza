@@ -7,7 +7,7 @@
  * - Rejection triggers Auto-Fix Loop: re-prompts LLM with rejection context
  * - generateDiff called before Gateway for write_file actions
  */
-import { CocoroCLMProvider, OllamaProvider, ModelRouter, Logger, createCaptureSink, ReviewGateway, generateDiff } from '@waza/core';
+import { CocoroCLMProvider, OllamaProvider, ModelRouter, Logger, createCaptureSink, ReviewGateway, generateDiff, injectSkills, BUILTIN_SKILLS } from '@waza/core';
 import type { Task, Step, LogEntry, TaskAction, ReviewHandler } from '@waza/core';
 import { useTaskStore } from '../stores/taskStore.js';
 import type { AgentState } from './types.js';
@@ -33,17 +33,20 @@ export interface LoopSettings {
   anthropicApiKey: string;
   geminiApiKey:    string;
   maxSteps:        number;
+  /** Enabled Skill IDs to inject into the system prompt */
+  activeSkillIds?: string[];
 }
 
 const DEFAULT_SETTINGS: LoopSettings = {
   cocoroBaseUrl:   'http://192.168.50.112:8000/v1',
   cocoroApiKey:    'mdl-llm-2026',
-  cocoroModel:     'gpt-4o',
+  cocoroModel:     'qwen25-72b',
   ollamaBaseUrl:   'http://localhost:11434',
   ollamaModel:     'llama3.2',
   anthropicApiKey: '',
   geminiApiKey:    '',
   maxSteps:        10,
+  activeSkillIds:  [],
 };
 
 // ── System prompt ──────────────────────────────────────────────────────────
@@ -171,7 +174,7 @@ export class DesktopAgentLoop {
       logger.info('system', `Task started (model: ${modelId})`, { taskId, userInput });
 
       const messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [
-        { role: 'system', content: this.buildSystemPrompt() },
+        { role: 'system', content: this.buildSystemPrompt(settings.activeSkillIds ?? []) },
         { role: 'user', content: userInput },
       ];
 
@@ -384,8 +387,9 @@ export class DesktopAgentLoop {
   }
 
   private async resolveAuto(settings: LoopSettings) {
-    const cocoroHealthUrl = settings.cocoroBaseUrl.replace('/v1', '/health');
-    if (await this.checkUrl(cocoroHealthUrl)) {
+    // Use /v1/models (OpenAI-compatible) instead of /health for compatibility with LocalProvider
+    const modelsUrl = `${settings.cocoroBaseUrl}/models`;
+    if (await this.checkUrl(modelsUrl)) {
       return new CocoroCLMProvider({
         kind: 'cocoro', model: settings.cocoroModel,
         baseUrl: settings.cocoroBaseUrl, apiKey: settings.cocoroApiKey,
@@ -419,8 +423,11 @@ export class DesktopAgentLoop {
     }
   }
 
-  private buildSystemPrompt(): string {
-    return `${SYSTEM_PROMPT}\n\nWorking directory: ${this.currentWorkDir}`;
+  private buildSystemPrompt(activeSkillIds: string[] = []): string {
+    const base = `${SYSTEM_PROMPT}\n\nWorking directory: ${this.currentWorkDir}`;
+    if (activeSkillIds.length === 0) return base;
+    // Inject enabled skills as additional system prompt fragments
+    return injectSkills(base, activeSkillIds, BUILTIN_SKILLS);
   }
 
   private async dispatchTool(

@@ -109,6 +109,7 @@ export function App(): JSX.Element {
       anthropicApiKey: settings.anthropicApiKey,
       geminiApiKey:    settings.geminiApiKey,
       maxSteps:        settings.maxSteps,
+      activeSkillIds:  settings.activeSkillIds,
     });
   }, [settings]);
 
