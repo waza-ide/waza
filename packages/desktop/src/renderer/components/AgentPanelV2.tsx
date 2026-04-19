@@ -318,18 +318,37 @@ export function AgentPanelV2(): JSX.Element {
         )}
 
         {/* Error */}
-        {task.status === 'error' && (
-          <div style={{
-            background: tokens.color.accent.red + '10',
-            border: `1px solid ${tokens.color.accent.red}33`,
-            borderRadius: tokens.radius.md,
-            padding: `${tokens.space.sm}px ${tokens.space.md}px`,
-            fontSize: tokens.font.size.sm,
-            color: tokens.color.accent.red,
-          }}>
-            ✗ Task failed
-          </div>
-        )}
+        {task.status === 'error' && (() => {
+          // Find last error log across all steps
+          const allLogs = task.steps.flatMap(s => s.logs);
+          const errLog = [...allLogs].reverse().find(l => l.level === 'error');
+          return (
+            <div style={{
+              background: tokens.color.accent.red + '10',
+              border: `1px solid ${tokens.color.accent.red}33`,
+              borderRadius: tokens.radius.md,
+              padding: `${tokens.space.sm}px ${tokens.space.md}px`,
+              fontSize: tokens.font.size.sm,
+              color: tokens.color.accent.red,
+            }}>
+              <div style={{ fontWeight: tokens.font.weight.medium, marginBottom: 4 }}>
+                ✗ Task failed
+              </div>
+              {errLog && (
+                <div style={{
+                  fontSize: tokens.font.size.xs,
+                  fontFamily: tokens.font.mono,
+                  color: tokens.color.text.secondary,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  lineHeight: 1.5,
+                }}>
+                  {errLog.message}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         <div ref={bottomRef} />
       </div>

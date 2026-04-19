@@ -388,9 +388,9 @@ export class DesktopAgentLoop {
   }
 
   private async resolveAuto(settings: LoopSettings) {
-    // Use /v1/models (OpenAI-compatible) instead of /health for compatibility with LocalProvider
+    // Use /v1/models (OpenAI-compatible) — pass API key in header for authenticated servers
     const modelsUrl = `${settings.cocoroBaseUrl}/models`;
-    if (await this.checkUrl(modelsUrl)) {
+    if (await this.checkUrl(modelsUrl, settings.cocoroApiKey)) {
       return new CocoroCLMProvider({
         kind: 'cocoro', model: settings.cocoroModel,
         baseUrl: settings.cocoroBaseUrl, apiKey: settings.cocoroApiKey,
@@ -407,6 +407,12 @@ export class DesktopAgentLoop {
         kind: 'claude', model: 'claude-sonnet-4-5', apiKey: settings.anthropicApiKey,
       });
     }
+    if (settings.geminiApiKey) {
+      const { GeminiProvider } = await import('@waza/core');
+      return new GeminiProvider({
+        kind: 'gemini', model: 'gemini-2.0-flash', apiKey: settings.geminiApiKey,
+      });
+    }
     throw new Error(
       'No LLM available. Check:\n' +
       `• cocoro-llm-server: ${settings.cocoroBaseUrl}\n` +
@@ -415,10 +421,16 @@ export class DesktopAgentLoop {
     );
   }
 
-  private async checkUrl(url: string): Promise<boolean> {
+  private async checkUrl(url: string, apiKey?: string): Promise<boolean> {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(2500) });
-      return res.ok;
+      const headers: Record<string, string> = {};
+      if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(2500),
+        headers,
+      });
+      // 401/403 means server is reachable but needs auth — still usable
+      return res.ok || res.status === 401 || res.status === 403;
     } catch {
       return false;
     }

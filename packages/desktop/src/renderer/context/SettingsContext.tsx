@@ -61,7 +61,7 @@ const DEFAULTS: WazaSettings = {
   theme:            'system',
   cocoroBaseUrl:    'http://192.168.50.112:8000/v1',
   cocoroApiKey:     'mdl-llm-2026',
-  cocoroModel:      'gpt-4o',
+  cocoroModel:      'qwen25-72b',
   ollamaBaseUrl:    'http://localhost:11434',
   ollamaModel:      'llama3.2',
   anthropicApiKey:  '',
