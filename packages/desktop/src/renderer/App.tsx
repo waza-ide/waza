@@ -34,7 +34,7 @@ export function App(): JSX.Element {
   const [threadName, setThreadName] = useState<string | null>(null);
   const [showAgentPanel, setShowAgentPanel] = useState(false);
 
-  // スレッドグループ (MVP: 空 = ファイルツリーモード)
+  // Thread groups (empty = file tree mode)
   const [threadGroups] = useState<ThreadGroup[]>([]);
   const [activeThreadId] = useState<string | null>(null);
 
@@ -54,10 +54,9 @@ export function App(): JSX.Element {
   }, []);
 
   const handleSubmit = useCallback(async (input: string, _modelId: ModelId): Promise<void> => {
-    // スレッド名設定（最初の40文字）
-    setThreadName(input.length > 40 ? input.slice(0, 40) + '...' : input);
+    setThreadName(input.length > 40 ? input.slice(0, 40) + '…' : input);
     setAgentLog(prev => [...prev, { role: 'user', content: input }]);
-    setCurrentState({ status: 'thinking', step: 0, message: 'Thinking...' });
+    setCurrentState({ status: 'thinking', step: 0, message: 'Thinking…' });
     setShowAgentPanel(true);
 
     const loop = agentLoopRef.current;
@@ -68,11 +67,11 @@ export function App(): JSX.Element {
         unsubscribe();
         setCurrentState({ status: 'idle' });
       } else if (state.status === 'error') {
-        setAgentLog(prev => [...prev, { role: 'assistant', content: `エラー: ${state.message}` }]);
+        setAgentLog(prev => [...prev, { role: 'assistant', content: `Error: ${state.message}` }]);
         unsubscribe();
         setCurrentState({ status: 'idle' });
       } else if (state.status === 'stopped') {
-        setAgentLog(prev => [...prev, { role: 'system', content: 'Stopped' }]);
+        setAgentLog(prev => [...prev, { role: 'system', content: 'Stopped.' }]);
         unsubscribe();
         setCurrentState({ status: 'idle' });
       }
@@ -91,7 +90,6 @@ export function App(): JSX.Element {
     setShowAgentPanel(false);
   }, []);
 
-  // MultiFileEdit ハンドラ
   const handleAcceptAll = useCallback(async (): Promise<void> => {
     if (!pendingEdit) return;
     await applyMultiFileEdit(pendingEdit);
@@ -127,14 +125,15 @@ export function App(): JSX.Element {
       fontFamily: tokens.font.sans,
       fontSize: tokens.font.size.base,
       overflow: 'hidden',
+      borderRadius: 12,   // matches window rounding
     }}>
       {/* TitleBar */}
       <TitleBar threadName={threadName} />
 
-      {/* メインボディ */}
+      {/* Main body */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-        {/* Sidebar (260px) — ActivityBar廃止 */}
+        {/* Sidebar */}
         <Sidebar
           rootDir={rootDir}
           onOpenFolder={handleOpenFolder}
@@ -146,29 +145,33 @@ export function App(): JSX.Element {
           onNewThread={handleNewThread}
         />
 
-        {/* MainArea */}
+        {/* Main content area */}
         <div style={{
           flex: 1,
           display: 'flex',
-          flexDirection: 'column',
           overflow: 'hidden',
           minWidth: 0,
-          background: tokens.color.bg.base,
         }}>
-          {/* TabBar（タブがある場合のみ） */}
-          {tabs.length > 0 && (
-            <TabBar
-              tabs={tabs}
-              activeTabId={activeTabId}
-              onSelect={setActiveTabId}
-              onClose={closeTab}
-            />
-          )}
+          {/* Editor column */}
+          <div style={{
+            flex: activeTab ? 1 : (showAgentPanel ? 1 : 1),
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            minWidth: 0,
+            background: tokens.color.bg.base,
+          }}>
+            {/* TabBar */}
+            {tabs.length > 0 && (
+              <TabBar
+                tabs={tabs}
+                activeTabId={activeTabId}
+                onSelect={setActiveTabId}
+                onClose={closeTab}
+              />
+            )}
 
-          {/* コンテンツエリア */}
-          <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-
-            {/* エディタ or WelcomeScreen */}
+            {/* Editor or Welcome */}
             <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
               {activeTab ? (
                 <Editor
@@ -184,91 +187,103 @@ export function App(): JSX.Element {
               )}
             </div>
 
-            {/* AgentPanel（実行中 or ログあり の場合のみ） */}
-            {showAgentPanel && (
+            {/* Multi-file diff */}
+            {pendingEdit && pendingEdit.files.length > 0 && (
               <div style={{
-                width: 300,
+                borderTop: `1px solid ${tokens.color.bg.border}`,
+                maxHeight: 260,
+                overflow: 'auto',
                 flexShrink: 0,
-                borderLeft: `1px solid ${tokens.color.bg.border}`,
-                background: tokens.color.bg.sidebar,
-                display: 'flex',
-                flexDirection: 'column',
               }}>
-                {/* パネルヘッダー */}
-                <div style={{
-                  height: 32,
-                  padding: `0 ${tokens.space.md}px`,
-                  borderBottom: `1px solid ${tokens.color.bg.borderSub}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexShrink: 0,
-                }}>
-                  <span style={{
-                    fontSize: tokens.font.size.xs,
-                    fontWeight: tokens.font.weight.semibold,
-                    color: tokens.color.text.tertiary,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                  }}>
-                    Agent
-                  </span>
-                  <button
-                    id="close-agent-panel-btn"
-                    onClick={() => setShowAgentPanel(false)}
-                    style={{
-                      fontSize: 14,
-                      color: tokens.color.text.tertiary,
-                      padding: `0 ${tokens.space.xs}px`,
-                      transition: `color ${tokens.transition.fast}`,
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.primary;
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.tertiary;
-                    }}
-                    title="パネルを閉じる"
-                  >
-                    ×
-                  </button>
-                </div>
-                <AgentPanel log={agentLog} currentState={currentState} />
+                <MultiFileDiffView
+                  edit={pendingEdit}
+                  onAcceptAll={handleAcceptAll}
+                  onRejectAll={handleRejectAll}
+                  onAcceptFile={handleAcceptFile}
+                  onRejectFile={handleRejectFile}
+                />
               </div>
             )}
-          </div>
 
-          {/* MultiFileDiff */}
-          {pendingEdit && pendingEdit.files.length > 0 && (
+            {/* Composer — fixed at bottom of main column */}
             <div style={{
               borderTop: `1px solid ${tokens.color.bg.border}`,
-              maxHeight: 260,
-              overflow: 'auto',
+              flexShrink: 0,
             }}>
-              <MultiFileDiffView
-                edit={pendingEdit}
-                onAcceptAll={handleAcceptAll}
-                onRejectAll={handleRejectAll}
-                onAcceptFile={handleAcceptFile}
-                onRejectFile={handleRejectFile}
+              <Composer
+                currentFile={activeTab?.path ?? null}
+                running={isRunning}
+                onSubmit={input => { void handleSubmit(input, 'auto'); }}
+                onStop={handleStop}
               />
             </div>
+
+            {/* StatusBar */}
+            <StatusBar
+              mode="local"
+              branch={null}
+              projectPath={rootDir}
+            />
+          </div>
+
+          {/* Agent panel — Codex-style right pane */}
+          {showAgentPanel && (
+            <div style={{
+              width: 320,
+              flexShrink: 0,
+              borderLeft: `1px solid ${tokens.color.bg.border}`,
+              background: tokens.color.bg.sidebar,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}>
+              {/* Panel header */}
+              <div style={{
+                height: 36,
+                padding: `0 ${tokens.space.md}px`,
+                borderBottom: `1px solid ${tokens.color.bg.borderSub}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexShrink: 0,
+              }}>
+                <span style={{
+                  fontSize: tokens.font.size.xs,
+                  fontWeight: tokens.font.weight.semibold,
+                  color: tokens.color.text.tertiary,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}>
+                  Agent
+                </span>
+                <button
+                  id="close-agent-panel-btn"
+                  onClick={() => setShowAgentPanel(false)}
+                  title="Close panel"
+                  style={{
+                    color: tokens.color.text.tertiary,
+                    fontSize: 16,
+                    lineHeight: 1,
+                    padding: '2px 4px',
+                    borderRadius: tokens.radius.sm,
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.primary;
+                    (e.currentTarget as HTMLButtonElement).style.background = tokens.color.bg.active;
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLButtonElement).style.color = tokens.color.text.tertiary;
+                    (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Agent log */}
+              <AgentPanel log={agentLog} currentState={currentState} />
+            </div>
           )}
-
-          {/* Composer */}
-          <Composer
-            currentFile={activeTab?.path ?? null}
-            running={isRunning}
-            onSubmit={input => { void handleSubmit(input, 'auto'); }}
-            onStop={handleStop}
-          />
-
-          {/* StatusBar */}
-          <StatusBar
-            mode="local"
-            branch={null}
-            projectPath={rootDir}
-          />
         </div>
       </div>
     </div>

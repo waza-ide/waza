@@ -2,7 +2,7 @@
   "name": "waza",
   "displayName": "Waza — AI IDE",
   "description": "Privacy-first AI coding agent. Local models supported.",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "publisher": "waza-ide",
   "engines": {
     "vscode": "^1.87.0"
