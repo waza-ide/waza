@@ -2,79 +2,69 @@
 
 ## 最終更新
 - 日時: 2026-04-19
-- 担当エージェント: Antigravity (Codex Mode Phase 2: v0.7.0)
+- 担当エージェント: Antigravity (Codex Mode Phase 3: v0.8.0)
 
 ## 完了タスク
-- [Phase 1–11] v0.5.4 まで完了済み（旧 HANDOFF 参照）
-- **[Codex Phase 1] v0.6.0 ✅ — Task/Step データモデル + Zustand + 構造化ロガー**
-  - branch: codex-mode/phase-1-foundation / commit: 9f0167f / tag: v0.6.0
-  - packages/core: Task/Step/TaskAction/AgentPlan/LogEntry 型定義 + Logger + createCaptureSink
-  - packages/desktop: Zustand taskStore (appendAction 含む 8 mutations)
-  - DesktopAgentLoop: run() ごとに Task→Step→LogEntry を store 永続化
-  - テスト: 119/119 pass
-
-- **[Codex Phase 2] v0.7.0 ✅ — Review Gateway**
-  - branch: codex-mode/phase-2-gateway / commit: e012080 / tag: v0.7.0
-  - packages/core/src/gateway/triggers.ts
-    - requiresReview(): write_file/delete_file/dangerous shell/git → true
-    - DANGEROUS_SHELL_TOKENS (38 tokens) + DANGEROUS_GIT_SUBCOMMANDS (20)
-    - batchRequiresReview(): 2+ mutating actions → always review
-    - reviewReason(): human-readable explanation
-  - packages/core/src/gateway/diff.ts
-    - generateDiff(): injected readFileFn → DiffResult { patch, isNewFile, +/- lines }
-    - parseDiffLines(): unified diff → DiffLine[] for UI rendering
-  - packages/core/src/gateway/gateway.ts
-    - ReviewGateway: check() / checkBatch() / reset() / getStatus()
-    - assertValidTransition(): strict Step status machine enforcement
-    - 状態: idle → proposing → awaiting_review → { approved | aborted }
-  - packages/desktop/src/renderer/components/review/ReviewModal.tsx
-    - createPortal でルート直下描画
-    - 差分行ハイライト (added: 緑 / removed: 赤 / header: 紫)
-    - [Approve] / [Reject] + キーボード Cmd+Enter / Escape
-    - action type バッジ + reason + 詳細表示
-  - packages/desktop/src/renderer/agent/loop.ts
-    - ReviewGateway をコンストラクタ注入（テスト可能）
-    - setReviewHandler() でランタイムスワップ
-    - write_file → generateDiff → gateway.check() → 承認後に dispatchTool
-    - 却下時 → step.status='aborted' → Auto-Fix Loop (re-prompt with rejection context)
-  - テスト: 253/253 pass (core:150 / desktop:81 / extension:7 / bridge:10 / ui:5)
+- [Phase 1–11] v0.5.4 まで完了済み
+- **[Codex Phase 1] v0.6.0 ✅** — Task/Step 型 + Zustand + Logger
+  - branch: codex-mode/phase-1-foundation / tag: v0.6.0
+- **[Codex Phase 2] v0.7.0 ✅** — Review Gateway
+  - branch: codex-mode/phase-2-gateway / tag: v0.7.0
+  - triggers.ts / diff.ts / gateway.ts / ReviewModal.tsx / Auto-Fix Loop
+- **[Codex Phase 3] v0.8.0 ✅** — 並列実行 & Scheduler
+  - branch: codex-mode/phase-3-scheduler / commit: 0533e06 / tag: v0.8.0
+  - packages/desktop/src/main/scheduler/queue.ts
+    - TaskQueue: priority(0/1/2) / MAX_WORKERS=3 / starvation boost >60s
+    - dequeue() はフル時でもブーストを適用（正確な優先度蓄積）
+  - packages/desktop/src/main/scheduler/runner.ts
+    - TaskRunner: Main process エンジン / AbortController で pause/cancel
+    - runAgentLoop(): node:fetch + node:fs でRendererに非依存
+    - webContents.send('task:update', patch) でリアルタイムpush
+  - packages/desktop/src/main/ipc/task.ts
+    - setupTaskIpc(): task:create / task:control / task:snapshot
+  - packages/desktop/src/preload/index.ts
+    - wazaAPI.task: create / control / snapshot / onUpdate
+  - packages/desktop/src/renderer/stores/taskStore.ts
+    - pauseTask / resumeTask / cancelTask / retryTask (IPC委譲 + 楽観更新)
+  - packages/core/src/task/types.ts — TaskStatus に 'paused' 追加
+  - src/__tests__/queue.test.ts (23 tests — 時刻モックでスターベーション検証)
+  - src/__tests__/taskStore.test.ts (+9 TaskControl tests)
+  - テスト合計: 282/282 pass (core:150 / desktop:110 / extension:7 / bridge:10 / ui:5)
 
 ## 次のタスク
 
-### Phase 3 — 並列実行 & Scheduler (v0.8.0)
+### Phase 4 — Automation / Skill / Telemetry (v0.9.0) [次フェーズ]
 
-実装対象ブランチ: codex-mode/phase-3-scheduler
+実装対象ブランチ: codex-mode/phase-4-skill-automation
 
-1. 実行ロジックを Electron Main process の Worker へ移設
-   - packages/desktop/src/main/scheduler/queue.ts — TaskQueue + 優先度 + スターベーション防止(60s)
-   - MAX_WORKERS = 3
-2. IPC channel 定義: packages/desktop/src/main/ipc/task.ts
-   - task:create / task:control / task:subscribe
-   - webContents.send('task:update', patch)
-3. TaskControl { pause, resume, cancel, retry } 全実装
-4. テスト: 60秒スターベーション(時刻モック) / MAX_WORKERS制限 / pause/resume
+#### 4.1 Skill
+- packages/core/src/skill/types.ts — Skill { id, name, content, enabled }
+- Task 実行時 task.skills[] を解決しシステムプロンプトへ注入
+- packages/desktop/src/renderer/components/settings/SkillsPanel.tsx — CRUD UI
+- テスト: 「Always respond in JSON」Skill が System Prompt に結合されること
 
-### Phase 4 — Automation / Skill / Telemetry (v0.9.0)
-- Skill エンティティ + System Prompt 注入
-- Automation トリガー (cron / file-watch / git-hook)
-- Model Telemetry (heartbeat 30s / latency / last-used)
+#### 4.2 Automation
+- packages/core/src/automation/types.ts — Automation { id, name, trigger, taskTemplate }
+- トリガー: cron (node-cron) / file-watch (chokidar) / git-hook
+- WazaSettings.automations に追加、Queueに流す (priority: 0)
 
-## App.tsx への ReviewModal 接続 (未接続残件)
+#### 4.3 Model Telemetry
+- packages/core/src/providers/base.ts — HealthCheckable interface 追加
+- 各Provider: healthCheck() → { ok, latencyMs }
+- Settings Panel: 🟢/🔴 + latency + last-used 表示 (30s heartbeat)
 
-loop.ts の setReviewHandler() は実装済みだが App.tsx からまだ呼ばれていない。
-Phase 3 で AgentPanel.tsx を taskStore 直結にするタイミングで一緒に繋ぐ予定。
-暫定: コンストラクタのデフォルト = 自動承認。
-
-## 未解決事項
-- packages/extension/src/router/index.ts — 旧実装残存（未使用）
-- AgentPanel.tsx は依然 AgentState ベース（Phase 3 で taskStore 直結予定）
-- ReviewModal は App.tsx にまだマウントされていない（setReviewHandler 未接続）
-- アイコン icon.png が384KB（Marketplace提出前に最適化必要）
+## 未解決事項 (Phase 3 残件)
+- ReviewModal は App.tsx にまだマウントされていない
+  → setReviewHandler() は実装済み。AgentPanel置換時に接続予定
+- TaskRunner.tick() / scheduleNext() は未完全 (Phase 3 = IPC→execute 直結)
+  → Phase 4 完了後に drain-loop 実装でも可
+- AgentPanel.tsx は依然 AgentState ベース (Phase 3 で残存)
+  → 次回 taskStore 直結に置換予定
 
 ## Electron 開発サーバー起動手順
 ```bash
 export PATH="$HOME/.local/share/pnpm:$PATH"
-cd packages/core && pnpm build  # Gatewayモジュールをビルド
+cd packages/core && pnpm build   # 最初にビルド必須
 
 # Terminal 1（renderer Vite dev server）
 cd packages/desktop && pnpm dev:renderer
@@ -84,11 +74,11 @@ NODE_ENV=development pnpm -F @waza/desktop electron
 ```
 
 ## 注意事項
-- packages/extension/src/extension.ts は # FROZEN（変更前に確認）
+- packages/extension/src/extension.ts は # FROZEN
 - packages/core/src/models/types.ts は # FROZEN（gemini追加は承認済み）
-- packages/core/src/providers/base.ts は # FROZEN
+- packages/core/src/providers/base.ts は # FROZEN（Phase 4 で HealthCheckable 追加時は確認）
 - pnpm は ~/.local/share/pnpm/pnpm にある（PATH要export）
-- core の dist/ をビルドしてから desktop の typecheck / test を実行
-- packages/desktop/release/ は .gitignore 対象（バイナリは大きすぎるため）
-- ReviewGateway は packages/core に置く（Electron / React 依存なし — テスト容易）
-- App.tsx で ReviewModal を setReviewHandler に接続するまでは自動承認モード
+- core build → desktop test の順序を守ること
+- packages/desktop/release/ は .gitignore 対象
+- ReviewGateway は core に置く（Electron/React依存なし）
+- TaskRunner は Main process 専用（Renderer から直接importしない）
